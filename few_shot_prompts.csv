@@ -1,0 +1,1158 @@
+prompt
+"Create a python script that uses tensorflow to model a linear regression problem using randomly genenrated 50 datat points. You need to train the model and also get the predictions.
+import numpy as np
+import tensorflow as tf
+import matplotlib.pyplot as plt
+
+np.random.seed(101)
+
+# Generating random linear data
+# There will be 50 data points ranging from 0 to 50
+x = np.linspace(0, 50, 50)
+y = np.linspace(0, 50, 50)
+
+# Adding noise to the random linear data
+x += np.random.uniform(-4, 4, 50)
+y += np.random.uniform(-4, 4, 50)
+
+n = len(x) # Number of data points
+
+# Plot of Training Data
+plt.scatter(x, y)
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title(""Training Data"")
+plt.show()
+
+X = tf.placeholder(""float"")
+Y = tf.placeholder(""float"")
+
+W = tf.Variable(np.random.randn(), name = ""W"")
+b = tf.Variable(np.random.randn(), name = ""b"")
+
+learning_rate = 0.01
+training_epochs = 1000
+# Hypothesis
+y_pred = tf.add(tf.multiply(X, W), b)
+
+# Mean Squared Error Cost Function
+cost = tf.reduce_sum(tf.pow(y_pred-Y, 2)) / (2 * n)
+
+# Gradient Descent Optimizer
+optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)
+
+# Global Variables Initializer
+init = tf.global_variables_initializer()
+
+# Starting the Tensorflow Session
+with tf.Session() as sess:
+    
+    # Initializing the Variables
+    sess.run(init)
+    
+    # Iterating through all the epochs
+    for epoch in range(training_epochs):
+        
+        # Feeding each data point into the optimizer using Feed Dictionary
+        for (_x, _y) in zip(x, y):
+            sess.run(optimizer, feed_dict = {X : _x, Y : _y})
+        
+        # Displaying the result after every 50 epochs
+        if (epoch + 1) % 50 == 0:
+            # Calculating the cost a every epoch
+            c = sess.run(cost, feed_dict = {X : x, Y : y})
+            print(""Epoch"", (epoch + 1), "": cost ="", c, ""W ="", sess.run(W), ""b ="", sess.run(b))
+    
+    # Storing necessary values to be used outside the Session
+    training_cost = sess.run(cost, feed_dict ={X: x, Y: y})
+    weight = sess.run(W)
+    bias = sess.run(b)
+
+# Calculating the predictions
+predictions = weight * x + bias
+print(""Training cost ="", training_cost, ""Weight ="", weight, ""bias ="", bias, '\n')
+
+Write a Python function using TensorFlow to create and compile a simple linear regression model which has a normalizer layer and a dense layer. Train it on the fuel efficiency dataset.
+pip install -q seaborn
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+
+# Make NumPy printouts easier to read.
+np.set_printoptions(precision=3, suppress=True)
+import tensorflow as tf
+
+from tensorflow import keras
+from tensorflow.keras import layers
+
+print(tf.__version__)
+
+url = 'http://archive.ics.uci.edu/ml/machine-learning-databases/auto-mpg/auto-mpg.data'
+column_names = ['MPG', 'Cylinders', 'Displacement', 'Horsepower', 'Weight',
+                'Acceleration', 'Model Year', 'Origin']
+
+raw_dataset = pd.read_csv(url, names=column_names,
+                          na_values='?', comment='\t',
+                          sep=' ', skipinitialspace=True)
+
+dataset = raw_dataset.copy()
+dataset.tail()
+
+dataset.isna().sum()
+
+dataset = dataset.dropna()
+
+dataset['Origin'] = dataset['Origin'].map({1: 'USA', 2: 'Europe', 3: 'Japan'})
+
+dataset = pd.get_dummies(dataset, columns=['Origin'], prefix='', prefix_sep='')
+dataset.tail()
+
+train_dataset = dataset.sample(frac=0.8, random_state=0)
+test_dataset = dataset.drop(train_dataset.index)
+
+train_features = train_dataset.copy()
+test_features = test_dataset.copy()
+
+train_labels = train_features.pop('MPG')
+test_labels = test_features.pop('MPG')
+
+horsepower = np.array(train_features['Horsepower'])
+
+horsepower_normalizer = layers.Normalization(input_shape=[1,], axis=None)
+horsepower_normalizer.adapt(horsepower)
+
+horsepower_model = tf.keras.Sequential([
+    horsepower_normalizer,
+    layers.Dense(units=1)
+])
+
+horsepower_model.summary()
+
+horsepower_model.compile(
+    optimizer=tf.keras.optimizers.Adam(learning_rate=0.1),
+    loss='mean_absolute_error')
+
+
+history = horsepower_model.fit(
+    train_features['Horsepower'],
+    train_labels,
+    epochs=100,
+    # Suppress logging.
+    verbose=0,
+    # Calculate validation results on 20% of the training data.
+    validation_split = 0.2)
+
+Write a Python function using TensorFlow to create and compile a simple linear regression model with one dense layer. Train it on the classic California housing dataset.
+"
+"Write a Python script using PyTorch to train a convolutional neural network (CNN) on the MNIST dataset. Include data loading, model definition, training loop, and evaluation
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+import torch
+from torch import optim
+from torch import nn
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+
+# !pip install torchvision
+import torchvision
+
+import torch.nn.functional as F
+import torchvision.datasets as datasets
+import torchvision.transforms as transforms
+
+# !pip install torchmetrics
+import torchmetrics
+
+batch_size = 60
+
+train_dataset = datasets.MNIST(root=""dataset/"", download=True, train=True, transform=transforms.ToTensor())
+
+train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
+
+test_dataset = datasets.MNIST(root=""dataset/"", download=True, train=False, transform=transforms.ToTensor())
+
+test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=True)
+
+class CNN(nn.Module):
+   def __init__(self, in_channels, num_classes):
+
+       """"""
+       Building blocks of convolutional neural network.
+
+       Parameters:
+           * in_channels: Number of channels in the input image (for grayscale images, 1)
+           * num_classes: Number of classes to predict. In our problem, 10 (i.e digits from  0 to 9).
+       """"""
+       super(CNN, self).__init__()
+
+       # 1st convolutional layer
+       self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=8, kernel_size=3, padding=1)
+       # Max pooling layer
+       self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
+       # 2nd convolutional layer
+       self.conv2 = nn.Conv2d(in_channels=8, out_channels=16, kernel_size=3, padding=1)
+       # Fully connected layer
+       self.fc1 = nn.Linear(16 * 7 * 7, num_classes)
+
+   def forward(self, x):
+       """"""
+       Define the forward pass of the neural network.
+
+       Parameters:
+           x: Input tensor.
+
+       Returns:
+           torch.Tensor
+               The output tensor after passing through the network.
+       """"""
+       x = F.relu(self.conv1(x))  # Apply first convolution and ReLU activation
+       x = self.pool(x)           # Apply max pooling
+       x = F.relu(self.conv2(x))  # Apply second convolution and ReLU activation
+       x = self.pool(x)           # Apply max pooling
+       x = x.reshape(x.shape[0], -1)  # Flatten the tensor
+       x = self.fc1(x)            # Apply fully connected layer
+       return x
+       x = x.reshape(x.shape[0], -1)  # Flatten the tensor
+       x = self.fc1(x)            # Apply fully connected layer
+       return x
+
+# Define the loss function
+criterion = nn.CrossEntropyLoss()
+
+# Define the optimizer
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+
+num_epochs=10
+for epoch in range(num_epochs):
+ # Iterate over training batches
+   print(f""Epoch [{epoch + 1}/{num_epochs}]"")
+
+   for batch_index, (data, targets) in enumerate(tqdm(dataloader_train)):
+       data = data.to(device)
+       targets = targets.to(device)
+       scores = model(data)
+       loss = criterion(scores, targets)
+       optimizer.zero_grad()
+       loss.backward()
+       optimizer.step()
+# Set up of multiclass accuracy metric
+acc = Accuracy(task=""multiclass"",num_classes=10)
+
+# Iterate over the dataset batches
+model.eval()
+with torch.no_grad():
+   for images, labels in dataloader_test:
+       # Get predicted probabilities for test data batch
+       outputs = model(images)
+       _, preds = torch.max(outputs, 1)
+       acc(preds, labels)
+       precision(preds, labels)
+       recall(preds, labels)
+
+#Compute total test accuracy
+test_accuracy = acc.compute()
+print(f""Test accuracy: {test_accuracy}"")
+
+Write a Python script using PyTorch to train a convolutional neural network (CNN) on the KMNIST dataset. Include data loading, model definition, training loop, and evaluation
+from torch.nn import Module
+from torch.nn import Conv2d
+from torch.nn import Linear
+from torch.nn import MaxPool2d
+from torch.nn import ReLU
+from torch.nn import LogSoftmax
+from torch import flatten
+import matplotlib
+matplotlib.use(""Agg"")
+from pyimagesearch.lenet import LeNet
+from sklearn.metrics import classification_report
+from torch.utils.data import random_split
+from torch.utils.data import DataLoader
+from torchvision.transforms import ToTensor
+from torchvision.datasets import KMNIST
+from torch.optim import Adam
+from torch import nn
+import matplotlib.pyplot as plt
+import numpy as np
+import argparse
+import torch
+import time
+
+class LeNet(Module):
+        def __init__(self, numChannels, classes):
+                # call the parent constructor
+                super(LeNet, self).__init__()
+                # initialize first set of CONV => RELU => POOL layers
+                self.conv1 = Conv2d(in_channels=numChannels, out_channels=20,
+                        kernel_size=(5, 5))
+                self.relu1 = ReLU()
+                self.maxpool1 = MaxPool2d(kernel_size=(2, 2), stride=(2, 2))
+                # initialize second set of CONV => RELU => POOL layers
+                self.conv2 = Conv2d(in_channels=20, out_channels=50,
+                        kernel_size=(5, 5))
+                self.relu2 = ReLU()
+                self.maxpool2 = MaxPool2d(kernel_size=(2, 2), stride=(2, 2))
+                # initialize first (and only) set of FC => RELU layers
+                self.fc1 = Linear(in_features=800, out_features=500)
+                self.relu3 = ReLU()
+                # initialize our softmax classifier
+                self.fc2 = Linear(in_features=500, out_features=classes)
+                self.logSoftmax = LogSoftmax(dim=1)
+
+def forward(self, x):
+                # pass the input through our first set of CONV => RELU =>
+                # POOL layers
+                x = self.conv1(x)
+                x = self.relu1(x)
+                x = self.maxpool1(x)
+                # pass the output from the previous layer through the second
+                # set of CONV => RELU => POOL layers
+                x = self.conv2(x)
+                x = self.relu2(x)
+                x = self.maxpool2(x)
+                # flatten the output from the previous layer and pass it
+                # through our only set of FC => RELU layers
+                x = flatten(x, 1)
+                x = self.fc1(x)
+                x = self.relu3(x)
+                # pass the output to our softmax classifier to get our output
+                # predictions
+                x = self.fc2(x)
+                output = self.logSoftmax(x)
+                # return the output predictions
+                return output
+# construct the argument parser and parse the arguments
+ap = argparse.ArgumentParser()
+ap.add_argument(""-m"", ""--model"", type=str, required=True,
+        help=""path to output trained model"")
+ap.add_argument(""-p"", ""--plot"", type=str, required=True,
+        help=""path to output loss/accuracy plot"")
+args = vars(ap.parse_args())
+
+PyTorch: Training your first Convolutional Neural Network (CNN)
+# define training hyperparameters
+INIT_LR = 1e-3
+BATCH_SIZE = 64
+EPOCHS = 10
+# define the train and val splits
+TRAIN_SPLIT = 0.75
+VAL_SPLIT = 1 - TRAIN_SPLIT
+# set the device we will be using to train the model
+device = torch.device(""cuda"" if torch.cuda.is_available() else ""cpu"")
+
+# load the KMNIST dataset
+print(""[INFO] loading the KMNIST dataset..."")
+trainData = KMNIST(root=""data"", train=True, download=True,
+        transform=ToTensor())
+testData = KMNIST(root=""data"", train=False, download=True,
+        transform=ToTensor())
+# calculate the train/validation split
+print(""[INFO] generating the train/validation split..."")
+numTrainSamples = int(len(trainData) * TRAIN_SPLIT)
+numValSamples = int(len(trainData) * VAL_SPLIT)
+(trainData, valData) = random_split(trainData,
+        [numTrainSamples, numValSamples],
+        generator=torch.Generator().manual_seed(42))
+
+# initialize the train, validation, and test data loaders
+trainDataLoader = DataLoader(trainData, shuffle=True,
+        batch_size=BATCH_SIZE)
+valDataLoader = DataLoader(valData, batch_size=BATCH_SIZE)
+testDataLoader = DataLoader(testData, batch_size=BATCH_SIZE)
+# calculate steps per epoch for training and validation set
+trainSteps = len(trainDataLoader.dataset) // BATCH_SIZE
+valSteps = len(valDataLoader.dataset) // BATCH_SIZE
+
+# initialize the LeNet model
+print(""[INFO] initializing the LeNet model..."")
+model = LeNet(
+        numChannels=1,
+        classes=len(trainData.dataset.classes)).to(device)
+# initialize our optimizer and loss function
+opt = Adam(model.parameters(), lr=INIT_LR)
+lossFn = nn.NLLLoss()
+# initialize a dictionary to store training history
+H = {
+        ""train_loss"": [],
+        ""train_acc"": [],
+        ""val_loss"": [],
+        ""val_acc"": []
+}
+# measure how long training is going to take
+print(""[INFO] training the network..."")
+
+# loop over our epochs
+for e in range(0, EPOCHS):
+        # set the model in training mode
+        model.train()
+        # initialize the total training and validation loss
+        totalTrainLoss = 0
+        totalValLoss = 0
+        # initialize the number of correct predictions in the training
+        # and validation step
+        trainCorrect = 0
+        valCorrect = 0
+        # loop over the training set
+        for (x, y) in trainDataLoader:
+                # send the input to the device
+                (x, y) = (x.to(device), y.to(device))
+                # perform a forward pass and calculate the training loss
+                pred = model(x)
+                loss = lossFn(pred, y)
+                # zero out the gradients, perform the backpropagation step,
+                # and update the weights
+                opt.zero_grad()
+                loss.backward()
+                opt.step()
+                # add the loss to the total training loss so far and
+                # calculate the number of correct predictions
+                totalTrainLoss += loss
+                trainCorrect += (pred.argmax(1) == y).type(
+                        torch.float).sum().item()
+
+        # switch off autograd for evaluation
+        with torch.no_grad():
+                # set the model in evaluation mode
+                model.eval()
+                # loop over the validation set
+                for (x, y) in valDataLoader:
+                        # send the input to the device
+                        (x, y) = (x.to(device), y.to(device))
+                        # make the predictions and calculate the validation loss
+                        pred = model(x)
+                        totalValLoss += lossFn(pred, y)
+                        # calculate the number of correct predictions
+                        valCorrect += (pred.argmax(1) == y).type(
+                                torch.float).sum().item()
+
+        # calculate the average training and validation loss
+        avgTrainLoss = totalTrainLoss / trainSteps
+        avgValLoss = totalValLoss / valSteps
+        # calculate the training and validation accuracy
+        trainCorrect = trainCorrect / len(trainDataLoader.dataset)
+        valCorrect = valCorrect / len(valDataLoader.dataset)
+        # update our training history
+        H[""train_loss""].append(avgTrainLoss.cpu().detach().numpy())
+        H[""train_acc""].append(trainCorrect)
+        H[""val_loss""].append(avgValLoss.cpu().detach().numpy())
+        H[""val_acc""].append(valCorrect)
+        # print the model training and validation information
+        print(""[INFO] EPOCH: {}/{}"".format(e + 1, EPOCHS))
+        print(""Train loss: {:.6f}, Train accuracy: {:.4f}"".format(
+                avgTrainLoss, trainCorrect))
+        print(""Val loss: {:.6f}, Val accuracy: {:.4f}\n"".format(
+                avgValLoss, valCorrect))
+
+Write a Python script using PyTorch to train a convolutional neural network (CNN) on the Cifar 10 dataset. Include data loading, model definition, training loop, and evaluation
+"
+"Create a scikit learn pipeline that builds standard scaler, Variance Threshold and K Neighbors Classifier in one single pipe.
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.feature_selection import VarianceThreshold
+from sklearn.neighbors import KNeighborsClassifier
+
+# Create the pipeline
+pipe = Pipeline([
+    ('scaler', StandardScaler()),
+    ('selector', VarianceThreshold()),
+    ('classifier', KNeighborsClassifier())
+])
+
+Create a scikit learn pipeline that builds standard scaler, PCA and Logistic Regression in one single pipe.
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.linear_model import LogisticRegression
+
+pipeline = Pipeline([
+    ('scaler', StandardScaler()),
+    ('pca', PCA(n_components=2)),
+    ('classifier', LogisticRegression())
+])
+
+Create a scikit-learn pipeline that generates a random n-class classification problem and creates a pipeline to compute the mean and standard deviation on a training set so as to be able to later re-apply the same transformation on the testing set. Train the model Fit the dataset using the same pipeline and compute score on the test set.
+"
+"In this example we learn to identify past vs present tense in <50 examples. Write a Python function that uses Hugging Face distilbert-base-uncased to train this binary classification model.
+from typing import Callable, Dict, Sequence, Text
+
+import numpy
+import tensorflow
+import toolz
+import transformers
+from toolz import curried
+
+import gamla
+
+
+def _make_model_from_input_ids_and_masks(
+    input_ids_in: tensorflow.keras.layers.Input,
+    input_masks_in: tensorflow.keras.layers.Input,
+    transformer_model,
+):
+    model = toolz.pipe(
+        transformer_model(input_ids_in, attention_mask=input_masks_in)[0],
+        tensorflow.keras.layers.Bidirectional(
+            tensorflow.keras.layers.LSTM(
+                50, return_sequences=True, dropout=0.1, recurrent_dropout=0.1
+            )
+        ),
+        tensorflow.keras.layers.GlobalMaxPool1D(),
+        tensorflow.keras.layers.Dense(50, activation=""relu""),
+        tensorflow.keras.layers.Dropout(0.2),
+        tensorflow.keras.layers.Dense(1, activation=""sigmoid""),
+        lambda layers: tensorflow.keras.Model(
+            inputs=[input_ids_in, input_masks_in], outputs=layers
+        ),
+    )
+
+    for layer in model.layers[:3]:
+        layer.trainable = False
+    return model
+
+
+def _make_model(max_sequence_length: int, transformer_model):
+    return _make_model_from_input_ids_and_masks(
+        tensorflow.keras.layers.Input(
+            shape=(max_sequence_length,), name=""input_ids"", dtype=""int32""
+        ),
+        tensorflow.keras.layers.Input(
+            shape=(max_sequence_length,), name=""attention_mask"", dtype=""int32""
+        ),
+        transformer_model,
+    )
+
+
+_DISTILBERT_MODEL = ""distilbert-base-uncased""
+
+
+def _make_model_and_encoder(max_sequence_length: int):
+    config = transformers.DistilBertConfig(dropout=0.2, attention_dropout=0.2)
+    config.output_hidden_states = False
+
+    return (
+        _make_model(
+            max_sequence_length,
+            transformers.TFDistilBertModel.from_pretrained(
+                _DISTILBERT_MODEL, config=config
+            ),
+        ),
+        transformers.DistilBertTokenizer.from_pretrained(
+            _DISTILBERT_MODEL,
+            do_lower_case=True,
+            add_special_tokens=True,
+            max_length=128,
+            pad_to_max_length=True,
+        ),
+    )
+
+
+_iterable_to_numpy_array = toolz.compose_left(
+    tuple, lambda data: numpy.asarray(data, dtype=""int32""),
+)
+
+
+def _encode(encoder: Callable[[Text], Dict[Text, numpy.array]]):
+    """"""Warning - due to weirdness of `merge_with` this will throw exception if iterable has only one element.""""""
+    return toolz.compose_left(
+        curried.map(encoder),
+        gamla.star(curried.merge_with(toolz.identity)),
+        curried.valmap(_iterable_to_numpy_array),
+    )
+
+
+def train(positive: Sequence[Text], negative: Sequence[Text], epochs: int):
+    max_sentence_length = max(map(len, toolz.concat([positive, negative])))
+    model, encoder = _make_model_and_encoder(max_sentence_length)
+    model.compile(loss=""mean_squared_error"")
+    sentence_encoder = _encode(
+        lambda sentence: encoder.encode_plus(
+            sentence,
+            add_special_tokens=True,
+            max_length=max_sentence_length,
+            pad_to_max_length=True,
+            return_attention_mask=True,
+            return_token_type_ids=True,
+        )
+    )
+    X = sentence_encoder(toolz.concat([positive, negative]))
+    y = _iterable_to_numpy_array(
+        toolz.concat([map(gamla.just(1), positive), map(gamla.just(0), negative)])
+    )
+    n_train = int((len(positive) + len(negative)) * 0.9)
+    trainX, testX = (
+        toolz.valmap(lambda d: d[:n_train, :], X),
+        toolz.valmap(lambda d: d[n_train:, :], X),
+    )
+    trainy, testy = y[:n_train], y[n_train:]
+    model.fit(
+        x=trainX, y=trainy, validation_data=(testX, testy), epochs=epochs,
+    )
+    return model, sentence_encoder
+
+
+_filter_empty_strip = toolz.compose_left(
+    curried.map(str.strip), curried.filter(toolz.identity), curried.take(1000), tuple,
+)
+
+
+""""""
+Example usage; training a classifier to differentiate present and past tense.
+model, encoder = bert_seq2seq.train(
+    [
+        ""go"",
+        ""walk"",
+        ""bring"",
+        ""think"",
+        ""build"",
+        ""drink"",
+        ""said"",
+        ""clean"",
+        ""do"",
+        ""bring"",
+        ""place"",
+        ""break"",
+        ""kick"",
+        ""code"",
+        ""type"",
+        ""kill"",
+        ""scare"",
+        ""make"",
+        ""bake"",
+        ""run"",
+    ],
+    [
+        ""placed"",
+        ""did"",
+        ""brought"",
+        ""say"",
+        ""drank"",
+        ""went"",
+        ""walked"",
+        ""brought"",
+        ""thought"",
+        ""built"",
+        ""cleaned"",
+        ""broke"",
+        ""kicked"",
+        ""coded"",
+        ""typed"",
+        ""killed"",
+        ""scared"",
+        ""made"",
+        ""baked"",
+        ""ran"",
+    ],
+    epochs=50,
+)
+model.predict(
+    encoder([""run"", ""ran"", ""go"", ""went"", ""laugh"", ""laughed"", ""smoke"", ""smoked""])
+
+Write a python function that uses hugging face distilbert-base-uncased-finetuned-sst-2-english, a distilled version of the BERT model to fine tune the text given in the input to the gradio app.
+import gradio as gr
+from transformers import pipeline
+
+def load_model():
+    # Load a pre-trained HuggingFace pipeline for sentiment analysis
+    model_pipeline = pipeline(""sentiment-analysis"", model=""distilbert-base-uncased-finetuned-sst-2-english"")
+    return model_pipeline
+
+def classify_text(model, text):
+    # Use the loaded model to classify text
+    result = model(text)
+    return result
+
+def main():
+    # Load the model
+    model = load_model()
+
+    # Define the Gradio interface
+    interface = gr.Interface(
+        fn=lambda text: classify_text(model, text),
+        inputs=gr.Textbox(lines=2, placeholder=""Enter Text Here...""),
+        outputs=""json"",
+        title=""Text Classification with HuggingFace"",
+        description=""This interface uses a HuggingFace model to classify text sentiments. Enter a sentence to see its classification.""
+    )
+
+    # Launch the Gradio app
+    interface.launch()
+
+if __name__ == ""__main__"":
+    main()
+
+Write a Python function that uses Hugging Face to train a model(distilbert/distilbert-base-uncaseddistilbert/distilbert-base-uncased) using the IMDb Reviews dataset. Its  binary classification task. Involve any necessary preprocessing steps if required.
+"
+"Build an image recognition tensorflow model to identify the images of flowers. Compile and fit the model for 10 epochs.
+import matplotlib.pyplot as plt 
+import numpy as np 
+import os 
+import PIL 
+import tensorflow as tf 
+from tensorflow import keras 
+from tensorflow.keras import layers 
+from tensorflow.keras.models import Sequential
+
+import pathlib 
+dataset_url = ""https://storage.googleapis.com/download.tensorflow.org/example_images/flower_photos.tgz""
+data_dir = tf.keras.utils.get_file('flower_photos', origin=dataset_url, untar=True)
+data_dir = pathlib.Path(data_dir)
+data_dir = data_dir / ""flower_photos""
+if not os.path.exists(data_dir):
+    raise FileNotFoundError(f""Dataset directory not found at: {data_dir}"")
+
+train_ds = tf.keras.utils.image_dataset_from_directory( 
+	data_dir, 
+	validation_split=0.2, 
+	subset=""training"", 
+	seed=123, 
+	image_size=(180, 180), 
+	batch_size=32)
+
+val_ds = tf.keras.utils.image_dataset_from_directory( 
+	data_dir, 
+	validation_split=0.2, 
+	subset=""validation"", 
+	seed=123, 
+	image_size=(180,180), 
+	batch_size=32)
+
+class_names = train_ds.class_names 
+print(class_names)
+
+num_classes = len(class_names) 
+model = Sequential([ 
+	layers.Rescaling(1./255, input_shape=(180,180, 3)), 
+	layers.Conv2D(16, 3, padding='same', activation='relu'), 
+	layers.MaxPooling2D(), 
+	layers.Conv2D(32, 3, padding='same', activation='relu'), 
+	layers.MaxPooling2D(), 
+	layers.Conv2D(64, 3, padding='same', activation='relu'), 
+	layers.MaxPooling2D(), 
+	layers.Flatten(), 
+	layers.Dense(128, activation='relu'), 
+	layers.Dense(num_classes) 
+])
+
+model.compile(optimizer='adam', 
+			loss=tf.keras.losses.SparseCategoricalCrossentropy( 
+				from_logits=True), 
+			metrics=['accuracy']) 
+model.summary()
+
+epochs=10
+history = model.fit( 
+train_ds, 
+validation_data=val_ds, 
+epochs=epochs 
+)
+
+Create an image classification model using tensorflow. Use CIFAR 10 dataset and use the functional API format of tensorflow to model the problem. Get predictions on test dataset and plot the image 0 too to assess it correctly
+import tensorflow as tf   
+
+# Display the version
+print(tf.__version__)     
+
+# other imports
+import numpy as np
+import matplotlib.pyplot as plt
+from tensorflow.keras.layers import Input, Conv2D, Dense, Flatten, Dropout
+from tensorflow.keras.layers import GlobalMaxPooling2D, MaxPooling2D
+from tensorflow.keras.layers import BatchNormalization
+from tensorflow.keras.models import Model
+
+# Load in the data
+cifar10 = tf.keras.datasets.cifar10
+
+# Distribute it to train and test set
+(x_train, y_train), (x_test, y_test) = cifar10.load_data()
+print(x_train.shape, y_train.shape, x_test.shape, y_test.shape)
+
+# Reduce pixel values
+x_train, x_test = x_train / 255.0, x_test / 255.0
+
+# flatten the label values
+y_train, y_test = y_train.flatten(), y_test.flatten()
+
+# number of classes
+K = len(set(y_train))
+
+# calculate total number of classes 
+# for output layer
+print(""number of classes:"", K)
+
+# Build the model using the functional API
+# input layer
+i = Input(shape=x_train[0].shape)
+x = Conv2D(32, (3, 3), activation='relu', padding='same')(i)
+x = BatchNormalization()(x)
+x = Conv2D(32, (3, 3), activation='relu', padding='same')(x)
+x = BatchNormalization()(x)
+x = MaxPooling2D((2, 2))(x)
+
+x = Conv2D(64, (3, 3), activation='relu', padding='same')(x)
+x = BatchNormalization()(x)
+x = Conv2D(64, (3, 3), activation='relu', padding='same')(x)
+x = BatchNormalization()(x)
+x = MaxPooling2D((2, 2))(x)
+
+x = Conv2D(128, (3, 3), activation='relu', padding='same')(x)
+x = BatchNormalization()(x)
+x = Conv2D(128, (3, 3), activation='relu', padding='same')(x)
+x = BatchNormalization()(x)
+x = MaxPooling2D((2, 2))(x)
+
+x = Flatten()(x)
+x = Dropout(0.2)(x)
+
+# Hidden layer
+x = Dense(1024, activation='relu')(x)
+x = Dropout(0.2)(x)
+
+# last hidden layer i.e.. output layer
+x = Dense(K, activation='softmax')(x)
+
+model = Model(i, x)
+
+# model description
+model.summary()
+
+# Compile
+model.compile(optimizer='adam',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+# Fit
+r = model.fit(
+  x_train, y_train, validation_data=(x_test, y_test), epochs=50)
+
+# Fit with data augmentation
+# Note: if you run this AFTER calling
+# the previous model.fit()
+# it will CONTINUE training where it left off
+batch_size = 32
+data_generator = tf.keras.preprocessing.image.ImageDataGenerator(
+  width_shift_range=0.1, height_shift_range=0.1, horizontal_flip=True)
+
+train_generator = data_generator.flow(x_train, y_train, batch_size)
+steps_per_epoch = x_train.shape[0] // batch_size
+
+r = model.fit(train_generator, validation_data=(x_test, y_test),
+              steps_per_epoch=steps_per_epoch, epochs=50)
+
+# label mapping
+
+labels = '''airplane automobile bird cat deerdog frog horseship truck'''.split()
+
+# select the image from our test dataset
+image_number = 0
+
+# display the image
+plt.imshow(x_test[image_number])
+
+# load the image in an array
+n = np.array(x_test[image_number])
+
+# reshape it
+p = n.reshape(1, 32, 32, 3)
+
+# pass in the network for prediction and 
+# save the predicted label
+predicted_label = labels[model.predict(p).argmax()]
+
+# load the original label
+original_label = labels[y_test[image_number]]
+
+# display the result
+print(""Original label is {} and predicted label is {}"".format(
+    original_label, predicted_label))
+
+Build a TensorFlow model for image classification using the Fashion MNIST dataset and integrate early stopping and model checkpoint callbacks during training.
+"
+"Write a PyTorch class that creates custom dataset. It takes in input of img dir and annotations csv file.
+import os
+import pandas as pd
+from torchvision.io import read_image
+
+class CustomImageDataset(Dataset):
+    def __init__(self, annotations_file, img_dir, transform=None, target_transform=None):
+        self.img_labels = pd.read_csv(annotations_file)
+        self.img_dir = img_dir
+        self.transform = transform
+        self.target_transform = target_transform
+
+    def __len__(self):
+        return len(self.img_labels)
+
+    def __getitem__(self, idx):
+        img_path = os.path.join(self.img_dir, self.img_labels.iloc[idx, 0])
+        image = read_image(img_path)
+        label = self.img_labels.iloc[idx, 1]
+        if self.transform:
+            image = self.transform(image)
+        if self.target_transform:
+            label = self.target_transform(label)
+        return image, label
+
+Write a PyTorch class that subclasses torch.utils.data.Dataset to load 100 image files and labels from a folder. The data would be randomly created and the class should also be defined such that its a custom class.Use this class with a DataLoader for batching.
+import torch
+from torch.utils.data import Dataset, DataLoader
+import torch.nn as nn
+import torch.optim as optim
+import numpy as np
+
+# Custom Dataset class
+class CustomDataset(Dataset):
+    def __init__(self, data, labels):
+        self.data = data
+        self.labels = labels
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        sample = self.data[idx]
+        label = self.labels[idx]
+        return sample, label
+
+# Prepare data
+data = np.random.randn(100, 3, 32, 32)  # 100 samples of 3x32x32 images
+labels = np.random.randint(0, 10, size=(100,))  # 100 labels in the range 0-9
+
+# Create Dataset
+dataset = CustomDataset(data, labels)
+
+# Create DataLoader
+dataloader = DataLoader(dataset, batch_size=4, shuffle=True, num_workers=2)
+
+Write a PyTorch class that subclasses torch.utils.data.Dataset to load image files and labels from a folder. Use this class with a DataLoader for batching. Use FashionMNIST dataset.
+"
+"Write a Python script that loads the UCI handwritten digits dataset, reduces its dimensionality using PCA, reduces dimension to 2 using LDA and fits a k-nearest neighbors classifier using scikit-learn.
+import matplotlib.pyplot as plt
+import numpy as np
+
+from sklearn import datasets
+from sklearn.decomposition import PCA
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier, NeighborhoodComponentsAnalysis
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+
+n_neighbors = 3
+random_state = 0
+
+# Load Digits dataset
+X, y = datasets.load_digits(return_X_y=True)
+
+# Split into train/test
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.5, stratify=y, random_state=random_state
+)
+
+dim = len(X[0])
+n_classes = len(np.unique(y))
+
+# Reduce dimension to 2 with PCA
+pca = make_pipeline(StandardScaler(), PCA(n_components=2, random_state=random_state))
+
+# Reduce dimension to 2 with LinearDiscriminantAnalysis
+lda = make_pipeline(StandardScaler(), LinearDiscriminantAnalysis(n_components=2))
+
+# Reduce dimension to 2 with NeighborhoodComponentAnalysis
+nca = make_pipeline(
+    StandardScaler(),
+    NeighborhoodComponentsAnalysis(n_components=2, random_state=random_state),
+)
+
+# Use a nearest neighbor classifier to evaluate the methods
+knn = KNeighborsClassifier(n_neighbors=n_neighbors)
+
+Write a Python script that uses the dataset given below, reduces its dimensionality using PCA, and fits a logistic regression classifier using scikit-learn. data = {
+    'Height': [170, 165, 180, 175, 160, 172, 168, 177, 162, 158],
+    'Weight': [65, 59, 75, 68, 55, 70, 62, 74, 58, 54],
+    'Age': [30, 25, 35, 28, 22, 32, 27, 33, 24, 21],
+    'Gender': [1, 0, 1, 1, 0, 1, 0, 1, 0, 0]  # 1 = Male, 0 = Female
+}
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import confusion_matrix
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+data = {
+    'Height': [170, 165, 180, 175, 160, 172, 168, 177, 162, 158],
+    'Weight': [65, 59, 75, 68, 55, 70, 62, 74, 58, 54],
+    'Age': [30, 25, 35, 28, 22, 32, 27, 33, 24, 21],
+    'Gender': [1, 0, 1, 1, 0, 1, 0, 1, 0, 0]  # 1 = Male, 0 = Female
+}
+df = pd.DataFrame(data)
+print(df)
+
+X = df.drop('Gender', axis=1)
+y = df['Gender']
+
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(df)
+
+pca = PCA(n_components=2)
+X_pca = pca.fit_transform(X_scaled)
+
+X_train, X_test, y_train, y_test = train_test_split(X_pca, y, test_size=0.3, random_state=42)
+
+model = LogisticRegression()
+model.fit(X_train, y_train)
+
+y_pred = model.predict(X_test)
+
+Write a Python script that loads the Iris dataset, reduces its dimensionality using PCA, and fits a k-nearest neighbors classifier using scikit-learn.
+"
+"Write a Java program using the Hadoop MapReduce API to analyze electricity usage data. The Mapper extracts the year and average price from each line, while the Reducer filters for records with an average price above 30. The job outputs the year and price pairs that meet this condition using standard Hadoop input and output formats.
+import java.io.IOException;
+import java.util.StringTokenizer;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+
+public class WordCount {
+
+  public static class TokenizerMapper
+       extends Mapper<Object, Text, Text, IntWritable>{
+
+    private final static IntWritable one = new IntWritable(1);
+    private Text word = new Text();
+
+    public void map(Object key, Text value, Context context
+                    ) throws IOException, InterruptedException {
+      StringTokenizer itr = new StringTokenizer(value.toString());
+      while (itr.hasMoreTokens()) {
+        word.set(itr.nextToken());
+        context.write(word, one);
+      }
+    }
+  }
+
+  public static class IntSumReducer
+       extends Reducer<Text,IntWritable,Text,IntWritable> {
+    private IntWritable result = new IntWritable();
+
+    public void reduce(Text key, Iterable<IntWritable> values,
+                       Context context
+                       ) throws IOException, InterruptedException {
+      int sum = 0;
+      for (IntWritable val : values) {
+        sum += val.get();
+      }
+      result.set(sum);
+      context.write(key, result);
+    }
+  }
+
+  public static void main(String[] args) throws Exception {
+    Configuration conf = new Configuration();
+    Job job = Job.getInstance(conf, ""word count"");
+    job.setJarByClass(WordCount.class);
+    job.setMapperClass(TokenizerMapper.class);
+    job.setCombinerClass(IntSumReducer.class);
+    job.setReducerClass(IntSumReducer.class);
+    job.setOutputKeyClass(Text.class);
+    job.setOutputValueClass(IntWritable.class);
+    FileInputFormat.addInputPath(job, new Path(args[0]));
+    FileOutputFormat.setOutputPath(job, new Path(args[1]));
+    System.exit(job.waitForCompletion(true) ? 0 : 1);
+  }
+}
+
+Write a Java program using the Hadoop MapReduce API to count the frequency of each word in a large text file, such as a sample from Project Gutenberg.
+package hadoop; 
+
+import java.util.*; 
+
+import java.io.IOException; 
+import java.io.IOException; 
+
+import org.apache.hadoop.fs.Path; 
+import org.apache.hadoop.conf.*; 
+import org.apache.hadoop.io.*; 
+import org.apache.hadoop.mapred.*; 
+import org.apache.hadoop.util.*; 
+
+public class ProcessUnits {
+   //Mapper class 
+   public static class E_EMapper extends MapReduceBase implements 
+   Mapper<LongWritable ,/*Input key Type */ 
+   Text,                /*Input value Type*/ 
+   Text,                /*Output key Type*/ 
+   IntWritable>        /*Output value Type*/ 
+   {
+      //Map function 
+      public void map(LongWritable key, Text value, 
+      OutputCollector<Text, IntWritable> output,   
+      
+      Reporter reporter) throws IOException { 
+         String line = value.toString(); 
+         String lasttoken = null; 
+         StringTokenizer s = new StringTokenizer(line,""\t""); 
+         String year = s.nextToken(); 
+         
+         while(s.hasMoreTokens()) {
+            lasttoken = s.nextToken();
+         }
+         int avgprice = Integer.parseInt(lasttoken); 
+         output.collect(new Text(year), new IntWritable(avgprice)); 
+      } 
+   }
+   
+   //Reducer class 
+   public static class E_EReduce extends MapReduceBase implements Reducer< Text, IntWritable, Text, IntWritable > {
+   
+      //Reduce function 
+      public void reduce( Text key, Iterator <IntWritable> values, 
+      OutputCollector<Text, IntWritable> output, Reporter reporter) throws IOException { 
+         int maxavg = 30; 
+         int val = Integer.MIN_VALUE; 
+            
+         while (values.hasNext()) { 
+            if((val = values.next().get())>maxavg) { 
+               output.collect(key, new IntWritable(val)); 
+            } 
+         }
+      } 
+   }
+
+   //Main function 
+   public static void main(String args[])throws Exception { 
+      JobConf conf = new JobConf(ProcessUnits.class); 
+      
+      conf.setJobName(""max_eletricityunits""); 
+      conf.setOutputKeyClass(Text.class);
+      conf.setOutputValueClass(IntWritable.class); 
+      conf.setMapperClass(E_EMapper.class); 
+      conf.setCombinerClass(E_EReduce.class); 
+      conf.setReducerClass(E_EReduce.class); 
+      conf.setInputFormat(TextInputFormat.class); 
+      conf.setOutputFormat(TextOutputFormat.class); 
+      
+      FileInputFormat.setInputPaths(conf, new Path(args[0])); 
+      FileOutputFormat.setOutputPath(conf, new Path(args[1])); 
+      
+      JobClient.runJob(conf); 
+   } 
+}
+
+Write a Java program using the Hadoop MapReduce API to count the frequency of each word in a large text file, such as a sample from Project Gutenberg.
+"
