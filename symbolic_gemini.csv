@@ -1,0 +1,745 @@
+gemini_symbolic
+"Here are rule-based checking constraints derived from the provided API structure for the `tensorflow` (tf) module:
+
+*   **Module Identity and Import Convention:** The module must be importable under the name `tensorflow` and commonly referred to using the alias `tf`.
+*   **Content Origin Constraint:** Public attributes (functions, classes, constants, sub-modules, etc.) accessed directly via `tf.` (e.g., `tf.constant`, `tf.Variable`, `tf.keras`) should be references to objects defined within TensorFlow's sub-modules, not defined directly in the top-level `tensorflow/__init__.py` source file (except potentially for internal setup details).
+*   **Aggregation Functionality:** The `tf` module must successfully aggregate and re-export public interfaces from its sub-modules, ensuring that core TensorFlow functionalities are accessible directly under the `tf` namespace.
+*   **Namespace Consistency:** The `tf` module should provide a coherent and comprehensive public namespace by exposing a wide range of types, functions, etc., gathered from its underlying sub-modules."
+"Based on the provided API structure (which appears to be a generic API definition, not specific to typical `tensorflow.keras` layers, models, etc., but rather illustrates structure types and function signatures), here are rule-based checking constraints:
+
+**General Constraints:**
+
+*   All defined types and functions must adhere to the structure provided (e.g., correct field names and types for structs, correct parameter names and types for functions).
+
+**Type-Specific Constraints:**
+
+*   **SomeType:**
+    *   Must contain a field named `field1` of type `String`.
+    *   Must contain a field named `field2` of type `Int`.
+*   **AnotherStruct:**
+    *   Must contain a field named `id` of type `Int`.
+    *   Must contain a field named `value` of type `Float`.
+*   **BasicType:**
+    *   Must represent or be equivalent to an `Int`.
+*   **Void:**
+    *   Represents the absence of a return value from a function. Cannot be used as a parameter type or field type.
+*   **Bytes:**
+    *   Represents a sequence of bytes.
+*   **String:**
+    *   Represents a sequence of characters.
+*   **Int:**
+    *   Represents an integer number.
+*   **Float:**
+    *   Represents a floating-point number.
+*   **ProcessOptions:**
+    *   Must contain a field named `timeout` of type `Int`.
+    *   Must contain a field named `retries` of type `Int`.
+*   **ResultType:**
+    *   Must contain a field named `status` of type `String`.
+    *   Must contain a field named `output` of type `String`.
+
+**Function-Specific Constraints:**
+
+*   **getValue:**
+    *   Must accept exactly one parameter.
+    *   The single parameter must be named `input` and be of type `SomeType`.
+    *   Must return a value of type `AnotherStruct`.
+*   **calculateTotal:**
+    *   Must accept exactly one parameter.
+    *   The single parameter must be named `items` and be of type `[Int]` (a list or array of Integers).
+    *   Must return a value of type `Float`.
+*   **processData:**
+    *   Must accept exactly two parameters.
+    *   The first parameter must be named `data` and be of type `Bytes`.
+    *   The second parameter must be named `options` and be of type `ProcessOptions`.
+    *   Must return a value of type `ResultType`.
+*   **getStatus:**
+    *   Must accept zero parameters.
+    *   Must return a value of type `String`.
+*   **shutdown:**
+    *   Must accept zero parameters.
+    *   Must return a value of type `Void` (no return value)."
+"Here are rule-based checking constraints for the `keras.Sequential` component based on the provided API structure:
+
+*   **Constructor (`keras.Sequential`)**: Must be called without arguments (based on the provided signature `parameters: []`).
+*   **Adding Layers (`add`)**:
+    *   Must be called with exactly one argument.
+    *   The argument (`layer`) must be an instance of `keras.layers.Layer` (or a subclass like `Dense`, `Input`).
+*   **Manual Building (`build`)**:
+    *   Can be called to explicitly build the model.
+    *   Must be called with exactly one argument (`batch_input_shape`).
+    *   The argument (`batch_input_shape`) must be a `tuple`.
+*   **Compiling (`compile`)**:
+    *   Must be called with at least two arguments.
+    *   The `optimizer` argument must be a `str`.
+    *   The `loss` argument must be a `str`.
+    *   (Based on JSON, `compile` does not explicitly *require* the model to be built first).
+*   **Training (`fit`)**:
+    *   Must be called with at least four arguments: `x`, `y`, `batch_size`, `epochs`.
+    *   The `batch_size` argument must be an `int`.
+    *   The `epochs` argument must be an `int`.
+    *   Can be called on an unbuilt model; this will trigger the build process if the input shape can be inferred from `x`.
+*   **Calling/Inference (`__call__` / `model(...)`)**:
+    *   Must be called with exactly one argument (`inputs`).
+    *   Can be called on an unbuilt model; this will trigger the build process if the input shape can be inferred from `inputs`.
+*   **Model State (`Built State`)**:
+    *   The model is not necessarily built immediately upon creation (Delayed-Build Pattern).
+    *   The model becomes built either by:
+        *   Adding an `keras.Input` layer as the first layer.
+        *   Calling the `build()` method.
+        *   Calling the model with data (via `fit`, `__call__`, potentially `eval`, `predict`).
+*   **Attributes (`weights`)**:
+    *   The `weights` attribute is only populated after the model has been successfully built. Accessing it before building will result in an empty list or similar state indicating no weights exist yet."
+"Here are the rule based checking constraints for the Dense component based on the provided structure:
+
+*   **units**: Must be a positive integer. It is a required argument.
+*   **activation**: If provided, must be a string or a callable/function.
+*   **use_bias**: If provided, must be a boolean value.
+*   **kernel_initializer**, **bias_initializer**, **kernel_regularizer**, **bias_regularizer**, **activity_regularizer**, **kernel_constraint**, **bias_constraint**: If provided, must be of the specified type (Initializer/string, Regularizer/string, Constraint/string) respectively.
+*   **bias_initializer**, **bias_regularizer**, **bias_constraint**: These arguments are only relevant and used if `use_bias` is set to `True`.
+*   **lora_rank**: If provided, must be an integer.
+*   **Input Shape**: The layer expects an input tensor with rank >= 2. The size of the last dimension of the input tensor (`input_dim`) implicitly determines the size of the first dimension of the layer's `kernel` weights matrix (`kernel.shape[0]`), as the dot product is computed along these dimensions."
+"Here are rule-based checking constraints for the `Input` component based on the provided structure:
+
+*   At least one of the arguments `shape`, `batch_shape`, or `tensor` must be provided to define the input structure.
+*   If provided, `shape` must be a tuple where each element is an integer or `None`. It should not include the batch dimension.
+*   If provided, `batch_shape` must be a tuple where each element is an integer or `None`. It includes the batch dimension as the first element.
+*   If both `shape` and `batch_shape` are provided, their non-batch dimensions must be compatible (e.g., the length of `batch_shape` minus 1 should equal the length of `shape`, and corresponding dimensions should match or be `None`).
+*   If provided, `batch_size` must be an integer.
+*   If both `batch_size` and `batch_shape` are provided, the batch dimension specified in `batch_shape` (the first element) must be equal to `batch_size` or `None`.
+*   If provided, `dtype` must be a string representing a valid data type.
+*   If provided, `sparse` must be a boolean.
+*   If provided, `name` must be a string. Names should ideally be unique within a model context (though this is often checked at model creation, not `Input` call time).
+*   If provided, `tensor` must be an object of type `Tensor` (a backend-specific tensor).
+*   If `tensor` is provided, providing `shape`, `batch_size`, `dtype`, or `sparse` may be redundant or contradictory. These parameters should either not be provided or must match the properties of the provided `tensor`.
+*   If provided, `optional` must be a boolean."
+"Here are the rule-based checking constraints for the Concatenate API Component based on the provided structure:
+
+*   **Constructor Parameter `axis`**: Must be an integer.
+*   **Call Method Input `inputs`**: Must be a list.
+*   **Call Method Input `inputs`**: All elements in the list must be tensors.
+*   **Call Method Input `inputs`**: The list must contain at least two tensors.
+*   **Call Method Input `inputs`**: All tensors in the list must have the same rank.
+*   **Call Method Input `inputs`**: All tensors in the list must have the same shape along all dimensions *except* for the dimension specified by the `axis` parameter.
+*   **Call Method Input `axis`**: The specified `axis` must be a valid index for the dimensions of the input tensors (i.e., if input tensors have rank N, `axis` must be in the range [-N, N-1])."
+"Here are the rule-based checking constraints for the `fetch_california_housing` API component:
+
+**Input Parameter Constraints:**
+
+*   `data_home`: Must be a string, a path-like object, or `None`.
+*   `download_if_missing`: Must be a boolean (`True` or `False`).
+*   `return_X_y`: Must be a boolean (`True` or `False`).
+*   `as_frame`: Must be a boolean (`True` or `False`). (Note: This parameter only affects the return type/attributes when `return_X_y` is `False`).
+*   `n_retries`: Must be an integer. Should ideally be non-negative (`>= 0`).
+*   `delay`: Must be a number (integer or float). Should ideally be non-negative (`>= 0`).
+
+**Output Constraints (Return Value):**
+
+*   **If `return_X_y` is `False`:**
+    *   The return value must be an object of type `sklearn.utils.Bunch`.
+    *   The returned Bunch object must have the following attributes: `data`, `target`, `feature_names`, `DESCR`.
+    *   The `data` attribute:
+        *   Must have a shape of `(20640, 8)`.
+        *   If `as_frame` is `True`, must be a `pandas.DataFrame`.
+        *   If `as_frame` is `False`, must be an `ndarray`.
+    *   The `target` attribute:
+        *   Must have a shape of `(20640,)`.
+        *   If `as_frame` is `True`, must be a `pandas.Series` or `pandas.DataFrame`.
+        *   If `as_frame` is `False`, must be an `ndarray`.
+    *   The `feature_names` attribute must be a list of length `8`.
+    *   The `DESCR` attribute must be a string.
+    *   If `as_frame` is `True`, the Bunch object must also have a `frame` attribute which is a `pandas.DataFrame` combining data and target.
+
+*   **If `return_X_y` is `True`:**
+    *   The return value must be a tuple of length `2`.
+    *   The first element of the tuple (representing data) must be an `ndarray` with shape `(20640, 8)`.
+    *   The second element of the tuple (representing target) must be an `ndarray` with shape `(20640,)`."
+"Here are the rule-based checking constraints for the `make_classification` API component parameters:
+
+*   **n_samples**: Must be a positive integer.
+*   **n_features**: Must be a positive integer.
+*   **n_informative**: Must be a non-negative integer.
+*   **n_redundant**: Must be a non-negative integer.
+*   **n_repeated**: Must be a non-negative integer.
+*   **Feature counts relationship**: The sum of `n_informative`, `n_redundant`, and `n_repeated` must be less than or equal to `n_features`. (`n_informative + n_redundant + n_repeated <= n_features`)
+*   **n_classes**: Must be an integer greater than or equal to 2.
+*   **n_clusters_per_class**: Must be a positive integer.
+*   **weights**:
+    *   If not `None`, must be an array-like (list, tuple, numpy array, etc.).
+    *   If not `None`, its length must be equal to `n_classes` or `n_classes - 1`.
+    *   All elements in `weights` must be non-negative.
+*   **flip_y**: Must be a float between 0.0 and 1.0, inclusive.
+*   **class_sep**: Must be a non-negative float (typically positive for separation).
+*   **hypercube**: Must be a boolean.
+*   **shift**: If not `None`, must be a float or an array-like with shape `(n_features,)`.
+*   **scale**:
+    *   If not `None`, must be a float or an array-like with shape `(n_features,)`.
+    *   If a float, it should preferably be positive.
+    *   If an array-like, elements should preferably be positive.
+*   **shuffle**: Must be a boolean.
+*   **random_state**: No strict rule-based type check beyond Python's handling of int, RandomState instance, or None."
+"Here are the rule-based checking constraints for the `train_test_split` API component based on the provided structure:
+
+*   **`arrays`**:
+    *   Must be provided (required).
+    *   Must be a sequence of allowed types (lists, numpy arrays, scipy-sparse matrices, pandas dataframes).
+    *   All provided arrays must have the same length (number of samples / shape[0]). There must be at least one array.
+*   **`test_size` / `train_size`**:
+    *   At least one of `test_size` or `train_size` must be non-None or they must both default to valid values (e.g., test=0.25, train=0.75 if both are None).
+    *   If `test_size` is a float, it must be between 0.0 and 1.0 (inclusive of 0.0, exclusive of 1.0 is typical, but description says ""between 0.0 and 1.0"").
+    *   If `test_size` is an int, it must be non-negative.
+    *   If `train_size` is a float, it must be between 0.0 and 1.0.
+    *   If `train_size` is an int, it must be non-negative.
+    *   If both `test_size` and `train_size` are provided (not None):
+        *   If both are floats, their sum must be less than or equal to 1.0.
+        *   If both are ints, their sum must be less than or equal to the total number of samples (length of `arrays`).
+        *   (Implicit based on typical usage): It's generally expected that if one is a float, the other, if also specified, should ideally be a float for sum checks, and similarly for ints, although the API might handle float/int combinations by prioritizing one or the other. The primary check is that the implied total size doesn't exceed the dataset size.
+*   **`shuffle` / `stratify`**:
+    *   If `shuffle` is `False`, then `stratify` must be `None`.
+*   **`stratify`**:
+    *   If `stratify` is not `None`, it must have the same length as the input `arrays`."
+"Here are rule-based checking constraints for the `StandardScaler` based on the provided API structure:
+
+*   **Parameter Constraint (Sparse Data):** If the input data `X` for `fit` or `fit_transform` is a sparse matrix, the `with_mean` parameter must be `False`. Attempting `with_mean=True` with sparse input will raise an exception.
+*   **Post-Fit State:** Attributes such as `scale_`, `mean_`, `var_`, `n_features_in_`, `feature_names_in_`, and `n_samples_seen_` should be populated after calling the `fit` or `fit_transform` methods. Calling `transform` before `fit` or `fit_transform` is invalid (requires fitted state).
+*   **Attribute Consistency (`scale_`):**
+    *   The `scale_` attribute should be an ndarray of shape `(n_features_in_,)` if `with_std` is `True` and the variance is non-zero.
+    *   `scale_` must be `None` if the `with_std` parameter is `False`.
+    *   If variance is zero for a feature, the corresponding scale factor in `scale_` should be 1 (when `with_std=True`).
+*   **Attribute Consistency (`mean_`):**
+    *   The `mean_` attribute should be an ndarray of shape `(n_features_in_,)` if `with_mean` is `True` or if `with_std` is `True` (as per the description stating it's None only when both are False).
+    *   `mean_` must be `None` if *both* the `with_mean` and `with_std` parameters are `False`.
+*   **Attribute Consistency (`var_`):**
+    *   The `var_` attribute should be an ndarray of shape `(n_features_in_,)` if `with_mean` is `True` or if `with_std` is `True` (as per the description stating it's None only when both are False).
+    *   `var_` must be `None` if *both* the `with_mean` and `with_std` parameters are `False`.
+*   **Feature Consistency (`transform`):** The input data `X` for the `transform` method must have the same number of features as the data used during `fit` (matching `n_features_in_`).
+*   **Feature Naming Consistency:** The `feature_names_in_` attribute is defined only when the input data `X` during `fit` had feature names that were all strings.
+*   **NaN Handling:**
+    *   NaN values in the input data `X` for `fit` are disregarded when calculating statistics (`mean_`, `var_`).
+    *   NaN values in the input data `X` for `transform` should be maintained in the output (the output should also have NaNs in corresponding positions)."
+"Here are rule-based checking constraints for the `LogisticRegression` API component based on the provided structure:
+
+*   **Solver and Penalty Compatibility:**
+    *   If `solver` is 'lbfgs', `penalty` must be 'l2' or None.
+    *   If `solver` is 'liblinear', `penalty` must be 'l1' or 'l2'.
+    *   If `solver` is 'newton-cg', `penalty` must be 'l2' or None.
+    *   If `solver` is 'newton-cholesky', `penalty` must be 'l2' or None.
+    *   If `solver` is 'sag', `penalty` must be 'l2' or None.
+    *   If `solver` is 'saga', `penalty` can be 'elasticnet', 'l1', 'l2', or None.
+
+*   **Dual Formulation:**
+    *   If `dual` is set to True, `penalty` must be 'l2' and `solver` must be 'liblinear'.
+
+*   **Regularization Strength (C):**
+    *   `C` must be a positive float (C > 0).
+
+*   **Tolerance (tol):**
+    *   `tol` must be a positive float (tol > 0).
+
+*   **Maximum Iterations (max_iter):**
+    *   `max_iter` must be a positive integer (max_iter > 0).
+
+*   **Solver and Multi-class Compatibility:**
+    *   If `solver` is 'liblinear', `multi_class` cannot be 'multinomial'.
+    *   If `solver` is 'newton-cholesky', `multi_class` cannot be 'multinomial'.
+
+*   **Elastic-Net Mixing (l1_ratio):**
+    *   The `l1_ratio` parameter is only used when `penalty` is 'elasticnet'. If `penalty` is not 'elasticnet', `l1_ratio` is ignored.
+    *   If `penalty` is 'elasticnet', `l1_ratio` must be a float between 0 and 1, inclusive (0 <= l1_ratio <= 1).
+
+*   **Intercept Scaling:**
+    *   The `intercept_scaling` parameter is only applied when `solver` is 'liblinear' and `fit_intercept` is True.
+
+*   **Warm Start:**
+    *   Setting `warm_start=True` has no effect when `solver` is 'liblinear'.
+
+*   **Parallel Jobs (n_jobs):**
+    *   The `n_jobs` parameter is ignored when `solver` is 'liblinear'."
+"Here are rule-based checking constraints for the `make_pipeline` function based on the provided API structure:
+
+*   **steps**:
+    *   Must be a sequence (like a tuple or list) of objects.
+    *   The sequence must not be empty (it must contain at least one step).
+    *   Each element within the sequence must be a scikit-learn Estimator object (i.e., it should typically have a `fit` method).
+*   **memory**:
+    *   Must be `None`, a string (representing a path), or an object that conforms to the `joblib.Memory` interface.
+*   **transform_input**:
+    *   Must be `None` or a list.
+    *   If it is a list, all elements within the list must be strings.
+    *   *(Note: While not an input constraint on the value itself, effective use of a non-None value requires metadata routing to be enabled via `sklearn.set_config`).*
+*   **verbose**:
+    *   Must be a boolean (`True` or `False`)."
+"Here are rule-based checking constraints for the `PCA` component based on the provided API structure:
+
+*   **n_components**:
+    *   Must be an integer > 0, a float in the range (0, 1), the string 'mle', or None.
+    *   If `n_components` is a float, `svd_solver` should typically be 'full'. (Though the description only explicitly links `0 < n_components < 1` and `svd_solver == 'full'`, other solvers might technically accept it but ignore it).
+    *   If `n_components` is 'mle', `svd_solver` must be 'full' or 'auto'.
+    *   *(Constraint applied during fit)*: If `svd_solver` is 'arpack' and `n_components` is an integer, it must be strictly less than `min(n_samples, n_features)` of the training data.
+
+*   **copy**:
+    *   Must be a boolean (True or False).
+
+*   **whiten**:
+    *   Must be a boolean (True or False).
+
+*   **svd_solver**:
+    *   Must be one of the strings: 'auto', 'full', 'covariance_eigh', 'arpack', or 'randomized'.
+
+*   **tol**:
+    *   Must be a float.
+    *   Must be greater than or equal to 0.0.
+    *   This parameter is only used when `svd_solver` is 'arpack'; it is ignored otherwise.
+
+*   **iterated_power**:
+    *   Must be an integer or the string 'auto'.
+    *   If an integer, must be greater than or equal to 0.
+    *   This parameter is only used when `svd_solver` is 'randomized'; it is ignored otherwise.
+
+*   **n_oversamples**:
+    *   Must be an integer.
+    *   This parameter is only used when `svd_solver` is 'randomized'; it is ignored otherwise.
+
+*   **power_iteration_normalizer**:
+    *   Must be one of the strings: 'auto', 'QR', 'LU', or 'none'.
+    *   This parameter is only used when `svd_solver` is 'randomized'; it is ignored otherwise.
+
+*   **random_state**:
+    *   Must be an integer, a `RandomState` instance, or None.
+    *   This parameter is only used when `svd_solver` is 'arpack' or 'randomized'; it is ignored otherwise."
+"Based on the provided API structure for `torch`, the following rule-based checking constraints can be derived:
+
+*   The `torch` package must contain a fundamental type named `Tensor` which functions as a multi-dimensional data structure.
+*   Functions categorized under ""Mathematical Operations"" must operate on `Tensor` objects (i.e., take Tensors as input or produce Tensors as output), as they are described as being ""defined over Tensors"".
+*   Utilities categorized under ""Serialization Utilities"" must support the serialization and deserialization of `Tensor` objects."
+"Based on the common structure and usage patterns of the `torch.nn` component in PyTorch, here are rule-based checking constraints:
+
+*   **Module Definition:**
+    *   Any custom layer or model must inherit from `torch.nn.Module`.
+    *   Subclasses of `torch.nn.Module` must implement a `forward` method.
+
+*   **Module Initialization (`__init__`):**
+    *   Parameters (`nn.Parameter`) and submodules (`nn.Module` instances) intended to be part of the module's state must be assigned as attributes within the `__init__` method.
+    *   Non-parameter state (buffers) that need to be saved/loaded should be registered using `self.register_buffer()`.
+
+*   **Forward Pass (`forward` method):**
+    *   The `forward` method should accept tensor inputs and produce tensor outputs.
+    *   Operations within `forward` should primarily use PyTorch tensor operations or call the `forward` methods of registered submodules.
+
+*   **Layer Connectivity and Shape Compatibility:**
+    *   The output shape of one layer must be compatible with the expected input shape of the subsequent layer. This is especially critical for dimensions representing features, channels, height, and width.
+    *   Layer-specific parameters (e.g., `in_features`, `out_features`, `in_channels`, `out_channels`, `kernel_size`, `stride`, `padding`) must be provided with correct types and values (e.g., positive integers, tuples of positive integers).
+
+*   **Data Type Consistency:**
+    *   Input tensors passed to a module must have a data type compatible with the module's parameters (e.g., typically `float32` or `float16`). Mixing dtypes without explicit casting is often an error.
+
+*   **Device Consistency:**
+    *   All parameters and buffers within a single `nn.Module` instance should ideally reside on the same device (CPU or a specific GPU).
+    *   Input tensors passed to a module's `forward` method must be on the same device as the module's parameters.
+
+*   **Loss Function Usage:**
+    *   The shape and data type of the model's output tensor must be compatible with the target tensor shape and type expected by the chosen loss function (`nn._Loss` subclass)."
+"Based on the provided API structure for `torch.optim`, here are rule-based checking constraints:
+
+*   **Package Existence:** The `torch.optim` package must be a valid and importable Python module.
+*   **Presence of Multiple Optimizer Types:** The `torch.optim` package must contain multiple public members that are Python classes, representing distinct optimization algorithms.
+*   **Optimizer Types are Classes:** Each identified component categorized as an ""Optimization Algorithm"" within `torch.optim` must be a Python class (`type`).
+*   **Interface Adherence - `step` Method:** Instances of the optimization algorithm classes must expose a public method named `step`.
+*   **Interface Adherence - `zero_grad` Method:** Instances of the optimization algorithm classes must expose a public method named `zero_grad`."
+"Based on the general knowledge of the `torchvision` library, here are rule-based checking constraints for its components:
+
+*   **Input Types and Formats:**
+    *   Verify that image inputs are either PIL Images, NumPy arrays, or PyTorch Tensors as expected by the specific function or transform.
+    *   Check that input Tensors have the correct dimensionality (e.g., `[C, H, W]` for transforms or `[N, C, H, W]` for models) and data type (e.g., `uint8`, `float32`).
+    *   Ensure bounding box data follows the expected format ('xyxy', 'xywh') as specified by operations (`torchvision.ops`).
+
+*   **Parameter Validation:**
+    *   Check if required arguments (like `root` for datasets, `pretrained` for models, `mean`/`std` for Normalize) are provided.
+    *   Validate that boolean arguments (`train`, `download`, `pretrained`) are indeed booleans.
+    *   Ensure numerical parameters (e.g., sizes, probabilities, degrees for transforms) are within valid ranges or of the correct type.
+    *   For dataset constructors, verify that the specified dataset name or parameters are valid for the available classes.
+
+*   **File and Path Handling:**
+    *   Check if file paths provided to I/O functions (`torchvision.io`, `torchvision.utils.save_image`) or dataset constructors (`root`) are valid and accessible.
+    *   If `download=True` for datasets, verify that the `root` directory is writable.
+    *   Ensure image/video files being read (`torchvision.io.read_image`, `read_video`) are in supported formats.
+
+*   **Transform Composition:**
+    *   Verify that `torchvision.transforms.Compose` is passed a list of valid transform objects.
+    *   Check that the output type of one transform is compatible with the expected input type of the next transform in a composition.
+
+*   **Model Usage:**
+    *   If loading a pretrained model (`pretrained=True`), check for potential network connectivity issues during instantiation.
+    *   Ensure the number of output classes for classification models matches the number of classes in the dataset being used, unless the model's final layer is explicitly modified.
+
+*   **Normalization:**
+    *   Ensure `torchvision.transforms.Normalize` is applied *after* `ToTensor` (or an equivalent step that scales pixel values to [0, 1] and changes format to CHW and type to float).
+    *   Check that the `mean` and `std` lists/tuples for `Normalize` have the correct length matching the number of channels.
+
+*   **Utility Function Inputs:**
+    *   For `torchvision.utils.make_grid`, check if the input tensor is either a batch (`NCHW`) or a list of individual images (`CHW`).
+    *   For `torchvision.utils.save_image`, verify that the input tensor's value range is appropriate for saving (e.g., [0, 1]) or that `normalize=True` or `range` is correctly specified.
+
+*   **Dependencies:**
+    *   Note that some functionalities might require additional dependencies (e.g., `pillow`, `pyav`, `jpeg4py`); checks could flag their absence if a specific function is called."
+"Okay, despite the lack of explicit documentation, the name `torchvision.transforms` strongly implies a module providing image transformation functionalities for use with PyTorch and torchvision. Based on common patterns in libraries like this, we can infer likely constraints.
+
+Here are rule-based checking constraints based on the expected nature of `torchvision.transforms`:
+
+*   **Input Data Type:** Transforms are expected to operate on specific image data types, typically PIL Images or PyTorch Tensors. A check should ensure the input is one of the accepted types.
+*   **Output Data Type:** Transforms should produce an output in an expected image data type, often the same as the input or converted to a PyTorch Tensor (especially `ToTensor`).
+*   **Parameter Types:** Parameters for individual transforms (e.g., size, angle, probability, mean, std, interpolation) must match the expected data types (e.g., int, float, tuple of int/float, boolean, string from a valid set).
+*   **Parameter Ranges/Values:** Numeric parameters should fall within valid ranges (e.g., positive values for size, probabilities between 0 and 1, angles within a defined range). String parameters should be from a predefined set of allowed options (e.g., interpolation modes).
+*   **Parameter Structure:** For parameters that are sequences (e.g., `size=(h, w)`, `mean=(r, g, b)`), checks should ensure the sequence has the correct length and its elements are of the correct type and value.
+*   **Transform Compatibility:** When chaining transforms (e.g., using `Compose`), the output format/type of one transform must be compatible with the expected input format/type of the next transform in the sequence.
+*   **`Compose` Input:** The `Compose` transform constructor should receive a list or tuple of callable transform objects (instances of transform classes or functions).
+*   **Callable Check:** Individual elements intended as transforms within `Compose` or when used alone should be callable objects (i.e., instances with a `__call__` method or functions).
+*   **Channel Consistency:** Transforms that operate on image channels (e.g., normalization, color jitter) require the input image to have a compatible number of channels (e.g., 3 for color, 1 for grayscale) based on the transform's design and parameters.
+*   **Dimension Compatibility:** Geometric transforms (e.g., crop, resize, rotate) require input image dimensions that are compatible with the requested operation and output size/shape."
+"Here are rule-based checking constraints for the components described in the provided JSON structure for `torch.nn.functional`:
+
+*   **For the `FunctionalInterfaceType` component:**
+    *   The type must be defined within the `types` list in the API structure.
+    *   The type must have the specific `name` ""FunctionalInterfaceType"".
+    *   The type's `kind` property must be exactly ""interface"".
+    *   The type's `is_functional` property must be set to `true`.
+    *   The type must contain exactly one method object within its `methods` list.
+    *   This single method object within the `methods` list must have its `is_abstract` property set to `true`.
+    *   The type must have at least one relationship defined in its `relationships` list where the `type` is ""contains"" and the `target` is ""singleAbstractMethod"".
+
+*   **For the `singleAbstractMethod` component (as defined within `FunctionalInterfaceType`):**
+    *   The method must be defined within the `methods` list of the `FunctionalInterfaceType` component.
+    *   The method must have the specific `name` ""singleAbstractMethod"".
+    *   The method's `is_abstract` property must be set to `true`.
+    *   The method's `parameters` property must be an empty list (`[]`).
+    *   The method's `return_type` property must be the string ""unknown""."
+"Based on the provided API structure for the `Dataset` component, here are rule-based checking constraints:
+
+*   The `Dataset` class is an abstract class and must be subclassed by user implementations, not instantiated directly.
+*   Any concrete subclass of `Dataset` must implement the `__getitem__` method.
+*   The `__getitem__` method must accept one argument (the `key`) and return a data `sample`.
+*   The `__len__` method is optional to implement for subclasses.
+*   If implemented, the `__len__` method must take no arguments and return an integer.
+*   The `__getitems__` method is optional to implement for subclasses.
+*   If implemented, the `__getitems__` method must accept one argument (a list of `keys`) and return a list of `samples`.
+*   For compatibility with default `Sampler` and `DataLoader` implementations, the `__len__` method is expected to be implemented.
+*   If a dataset uses non-integral keys (keys that are not integers), a custom `Sampler` must be provided when using it with `DataLoader`."
+"Here are the rule-based checking constraints for the `DataLoader` component:
+
+*   The `dataset` parameter is required and must be provided.
+*   `shuffle` is mutually exclusive with `sampler`. If `sampler` is specified, `shuffle` must be `False`.
+*   `shuffle` is mutually exclusive with `batch_sampler`. If `batch_sampler` is specified, `shuffle` must be `False`.
+*   `batch_sampler` is mutually exclusive with `batch_size`. If `batch_sampler` is specified, `batch_size` must not be specified (or effectively ignored).
+*   `batch_sampler` is mutually exclusive with `shuffle`. If `batch_sampler` is specified, `shuffle` must be `False`.
+*   `batch_sampler` is mutually exclusive with `sampler`. Only one of `sampler` or `batch_sampler` can be specified.
+*   `batch_sampler` is mutually exclusive with `drop_last`. If `batch_sampler` is specified, `drop_last` must not be specified (or effectively ignored).
+*   If `sampler` or `batch_sampler` is provided and it is an `Iterable` but *not* a subclass of `Sampler`, it must implement the `__len__` method.
+*   The `num_workers` parameter must be a non-negative integer (implicitly, although not explicitly stated as a constraint, 0 is allowed).
+*   The `timeout` parameter must be a non-negative numeric value.
+*   If the 'spawn' multiprocessing start method is used, the `worker_init_fn` parameter cannot be an unpicklable object (like a lambda function).
+*   The `prefetch_factor` parameter is a keyword-only argument.
+*   The `pin_memory_device` parameter requires `pin_memory` to be set to `True`.
+*   The `in_order` parameter setting only applies when `num_workers` is greater than 0."
+"Based on the common structure and usage of `torchvision.datasets`, despite the empty extracted structure, the following rule-based checking constraints would typically apply to the components (specifically, the Dataset types expected within this module):
+
+*   **Dataset Class Identification:** Any object identified as a dataset class within `torchvision.datasets` should inherit from `torch.utils.data.Dataset`.
+*   **Constructor Signature:** Dataset class constructors (`__init__`) should accept standard arguments such as `root` (str), `train` (bool), and `download` (bool). They should also typically accept optional `transform` and `target_transform` arguments (callable).
+*   **Instance Methods:** Instantiated dataset objects must implement the `__len__()` method.
+*   **Instance Methods:** Instantiated dataset objects must implement the `__getitem__(index)` method.
+*   **`__len__` Return Type:** The `__len__()` method must return a non-negative integer representing the size of the dataset.
+*   **`__getitem__` Behavior:** The `__getitem__(index)` method should return a data sample (typically a tuple like (data, target)) for a valid integer index.
+*   **Download Functionality:** If `download=True` is passed to the constructor and data is not found in the `root` directory, the constructor (or first access) should attempt to download the necessary data.
+*   **Data Presence Check:** If `download=False` is passed and data is not found in the `root` directory, the constructor or `__getitem__` access should raise an appropriate error (e.g., `FileNotFoundError`).
+*   **Transformation Application:** If `transform` or `target_transform` are provided, the `__getitem__` method should apply these transformations to the respective components of the data sample before returning."
+"Here are the rule-based checking constraints for the `ToTensor` component based on the provided structure:
+
+*   **Input Type:** The input must be either a `PIL.Image.Image` object or a `numpy.ndarray`.
+*   **Input ndarray Shape:** If the input is a `numpy.ndarray`, its expected shape is `(H x W x C)`.
+*   **Output Shape:** The output tensor will have the shape `(C x H x W)`, regardless of the input type (PIL or ndarray) or whether scaling is applied.
+*   **Scaling Condition (ndarray):** Scaling from the input range (expected `[0, 255]`) to `[0.0, 1.0]` in the output occurs if the input is a `numpy.ndarray` with `dtype` `np.uint8`.
+*   **Scaling Condition (PIL Image):** Scaling from the input range (expected `[0, 255]`) to `[0.0, 1.0]` in the output occurs if the input is a `PIL.Image.Image` with one of the following modes: `L`, `LA`, `P`, `I`, `F`, `RGB`, `YCbCr`, `RGBA`, `CMYK`, `1`.
+*   **Output Type & Range (Scaling):** If scaling is applied (based on the above conditions), the output will be a `torch.FloatTensor` with values within the `[0.0, 1.0]` range.
+*   **Output Type & Range (No Scaling):** If scaling is NOT applied (e.g., ndarray with non-uint8 dtype, or PIL Image with a mode not listed for scaling), the output will be a `torch.Tensor` whose value range depends directly on the input range (values are converted but not scaled to `[0, 1]`).
+*   **Compatibility:** The `ToTensor` transform does not support torchscript.
+*   **Usage Warning:** This transform should generally not be used when transforming target image masks, as the potential scaling to `[0.0, 1.0]` is usually undesired for discrete mask values."
+"Here are rule-based checking constraints based on the provided NumPy API structure:
+
+*   **NumPy Module:**
+    *   Must contain subpackages: `lib`, `random`, `linalg`, `fft`, `polynomial`, `testing`, `distutils`.
+    *   Must contain top-level members: `sort`, `info`, `array`, `cos`, `test`, `show_config`, `__version__`.
+    *   Must provide the `array object` type.
+    *   Must provide the `ufunc object` type.
+
+*   **array object:**
+    *   Items stored within the object must be homogeneous (of the same data type).
+    *   The object must support fast mathematical operations.
+    *   Many top-level NumPy functions that operate on arrays should return a *copy* of the array rather than modifying it in-place.
+    *   The object should possess in-place methods (e.g., `sort()`) that perform operations directly on the array data.
+
+*   **ufunc object:**
+    *   These objects are typically implemented in C for performance.
+    *   Standard Python `help()` may not show full documentation; `np.info()` should be used to retrieve complete help text.
+
+*   **Subpackage `lib`:**
+    *   Should contain basic functions utilized by other NumPy subpackages.
+
+*   **Subpackage `random`:**
+    *   Should contain tools specifically for generating random numbers.
+
+*   **Subpackage `linalg`:**
+    *   Should contain functions and objects for linear algebra operations.
+
+*   **Subpackage `fft`:**
+    *   Should contain routines for performing Fast Fourier Transforms.
+
+*   **Subpackage `polynomial`:**
+    *   Should contain tools for working with polynomials.
+
+*   **Subpackage `testing`:**
+    *   Should contain utilities for testing NumPy code.
+
+*   **Subpackage `distutils`:**
+    *   Should contain enhancements for Python's distutils, particularly supporting Fortran compilers. (Note: This subpackage is primarily for Python <= 3.11 according to the description).
+
+*   **Top-level Member `sort` (function):**
+    *   Is a function that operates on array objects.
+    *   When called as `np.sort()`, it should return a *copy* of the input array, sorted.
+    *   A corresponding `sort()` method must exist on the `array object` for in-place sorting.
+
+*   **Top-level Member `info` (utility):**
+    *   Is a utility function.
+    *   When called with a `ufunc object` as an argument, it should provide more detailed help/documentation than standard `help()`.
+
+*   **Top-level Member `array` (constructor):**
+    *   Is a function used to create instances of the `array object`.
+
+*   **Top-level Member `cos` (function):**
+    *   Is a function (often a `ufunc`).
+
+*   **Top-level Member `test` (utility):**
+    *   Is a utility function used to run NumPy's internal unit tests.
+
+*   **Top-level Member `show_config` (utility):**
+    *   Is a utility function that displays information about how NumPy was built/configured.
+
+*   **Top-level Member `__version__` (attribute):**
+    *   Is an attribute (string) representing the installed NumPy version."
+"Based on the extracted API structure for pandas, here are rule-based checking constraints for each component:
+
+**Core Components: Types**
+
+*   **Series**:
+    *   Must represent a one-dimensional data structure.
+    *   Must have an associated index (labels).
+*   **DataFrame**:
+    *   Must represent a two-dimensional tabular data structure.
+    *   Must have both row index and column labels.
+    *   Columns can have different data types.
+
+**Core Components: Main Features**
+
+*   **Missing Data Handling**:
+    *   Functions/methods should exist to detect (`isnull`, `notnull`) and handle (`dropna`, `fillna`, `interpolate`) missing values.
+    *   Operations should handle `NaN` values appropriately by default (e.g., skipping in aggregations).
+*   **Size Mutability**:
+    *   DataFrames must allow insertion and deletion of columns.
+*   **Data Alignment**:
+    *   Binary operations between pandas objects with different indexes should perform automatic alignment based on labels.
+    *   Operations should support explicit index alignment where necessary.
+*   **Hierarchical Indexing**:
+    *   Indexes can consist of multiple levels of labels.
+    *   Operations and selections should support working with multi-level indexes.
+
+**Functional Categories: Data Manipulation**
+
+*   **Group By Operations**:
+    *   Input data (Series or DataFrame) and grouping criteria must be specified.
+    *   Supports applying aggregation, transformation, or filtering functions per group.
+*   **Converting Data Structures**:
+    *   Functions/constructors must exist to convert common Python (list, dict, tuple) and NumPy data structures into pandas objects (Series, DataFrame).
+    *   Methods should exist to convert pandas objects back to Python/NumPy structures.
+*   **Merging and Joining**:
+    *   Functions (`merge`, `join`, `concat`) must combine two or more pandas objects.
+    *   Joining criteria (keys, index) must be specified or inferrable.
+*   **Reshaping and Pivoting**:
+    *   Functions/methods (`melt`, `pivot`, `stack`, `unstack`) must change the dimensionality or layout of a DataFrame.
+
+**Functional Categories: Indexing and Selection**
+
+*   **Label-based Slicing**:
+    *   Accessing data using labels (index and column names) must be supported (`.loc`).
+    *   Label-based slicing endpoints should be inclusive.
+*   **Fancy Indexing**:
+    *   Accessing data using lists or arrays of labels or integer positions must be supported.
+    *   Boolean indexing (selecting based on boolean conditions) must be supported.
+*   **Subsetting**:
+    *   Methods should allow selecting subsets of rows and/or columns to return smaller pandas objects.
+
+**Functional Categories: IO Tools**
+
+*   **Loading/Saving Data**:
+    *   Functions must read data from external sources into pandas objects.
+    *   Methods must write data from pandas objects to external sources.
+*   **Reading/Writing Flat Files**:
+    *   Functions (`read_csv`, `read_fwf`) must read data from CSV/delimited/fixed-width files.
+    *   Methods (`to_csv`) must write data to CSV/delimited files.
+    *   Requires valid file paths or file-like objects.
+*   **Reading/Writing Excel Files**:
+    *   Functions (`read_excel`) must read data from Excel files.
+    *   Methods (`to_excel`) must write data to Excel files.
+    *   May require specific engine dependencies (e.g., `openpyxl`).
+*   **Reading/Writing Databases**:
+    *   Functions (`read_sql`) must read data from databases via SQL queries or table names.
+    *   Methods (`to_sql`) must write data to database tables.
+    *   Requires database connection objects or connection URLs.
+*   **Reading/Writing HDF5**:
+    *   Functions (`read_hdf`) must read data from HDF5 files.
+    *   Methods (`to_hdf`) must write data to HDF5 files.
+    *   Requires specific dependencies (e.g., `pytables`).
+    *   Data must be stored/retrieved using keys within the HDF5 file.
+
+**Relationships**
+
+*   **DataFrame composition**:
+    *   Individual columns of a DataFrame must be accessible as Series objects.
+*   **Operation Inputs/Outputs**:
+    *   Most core pandas functions and methods should operate on or return Series or DataFrame objects.
+*   **Conversion Capability**:
+    *   Explicit tools must exist for converting data between pandas structures and standard Python/NumPy structures.
+*   **IO Interaction**:
+    *   IO tools must connect external data sources/destinations with pandas Series or DataFrame objects."
+"Here are rule-based checking constraints for the `matplotlib.pyplot` components based on the provided structure:
+
+*   The `matplotlib.pyplot` module (commonly aliased as `plt`) acts as a state-based interface for plotting, drawing on the currently active `Axes` and managing the current `Figure`.
+*   `plt.plot` requires at least two arguments, `x` and `y`, which must be `array-like`.
+*   `plt.plot` modifies the state of the current `Axes` rather than returning an object handle.
+*   `plt.show` is used to display created figures. It does not take parameters or return a value (`None`).
+*   `plt.figure` is used to create a new `Figure` or activate an existing one and returns a `Figure` object.
+*   `plt.subplots` is a helper function that creates *both* a `Figure` and a set of `Axes` and returns them as a tuple (`Figure`, `Axes` or array of `Axes`).
+*   `plt.subplot_mosaic` is another helper function to create a `Figure` and potentially complex arrangements of `Axes`, returning the `Figure` and structured access to the `Axes`.
+*   `Figure` objects are the top-level containers; they must contain one or more `Axes` objects.
+*   `Axes` objects represent a plotting area and are contained within a `Figure`. They are the target of plotting commands like `plt.plot` (implicitly) or provide a `plot` method (explicitly, though the method signature isn't detailed here, only the relationship)."
+"Based on the provided API structure for `AutoTokenizer`:
+
+*   Direct instantiation using `AutoTokenizer()` is not allowed and will result in an error.
+*   The component must be instantiated using the `AutoTokenizer.from_pretrained()` class method."
+"Here are the rule-based checking constraints for the `DataCollatorWithPadding` API component:
+
+*   **`tokenizer`**: Must be provided and must be an instance of `PreTrainedTokenizer` or `PreTrainedTokenizerFast`.
+*   **`padding`**: If provided, must be a boolean, a string, or a `utils.PaddingStrategy` enum value. If a string, it must be one of the allowed values: `""longest""`, `""max_length""`, `""do_not_pad""`.
+*   **`max_length`**: If provided, must be an integer.
+*   **`pad_to_multiple_of`**: If provided, must be an integer.
+*   **`return_tensors`**: If provided, must be a string and one of the allowed values: `""np""`, `""pt""`, `""tf""`."
+"Based on the provided API structure for `AutoModelForSequenceClassification`, here are the rule-based checking constraints:
+
+*   **Instantiation Constraint:** The `AutoModelForSequenceClassification` class *must not* be instantiated directly using its constructor (`AutoModelForSequenceClassification()`). Attempting to do so will result in an error.
+*   **Factory Method Usage:** Instances of `AutoModelForSequenceClassification` (or the specific model it resolves to) *must* be created by calling one of the designated factory class methods:
+    *   `AutoModelForSequenceClassification.from_pretrained(...)`
+    *   `AutoModelForSequenceClassification.from_config(...)`"
+"Here are important rule-based checking constraints for the `TrainingArguments` components:
+
+*   **Parameter Value Ranges:**
+    *   `per_device_train_batch_size`, `per_device_eval_batch_size`, `gradient_accumulation_steps`, `eval_accumulation_steps` (if set), `dataloader_num_workers`, `dataloader_prefetch_factor` (if set), `save_total_limit` (if set), `ddp_bucket_cap_mb` (if set), `ddp_timeout` (if set), `tpu_num_cores` (if set): Must be positive integers.
+    *   `learning_rate`, `weight_decay`, `max_grad_norm`, `num_train_epochs`, `eval_delay` (if set), `neftune_noise_alpha` (if set): Must be non-negative.
+    *   `adam_beta1`, `adam_beta2`: Must be between 0 and 1 (exclusive).
+    *   `adam_epsilon`: Must be positive.
+    *   `warmup_ratio`, `label_smoothing_factor`: Must be between 0.0 and 1.0 (inclusive).
+    *   `max_steps`: Must be -1 or a positive integer.
+    *   `past_index`: Must be -1 or a non-negative integer.
+    *   `torch_empty_cache_steps`: Must be a positive integer if set.
+*   **Choice/Enum Value Validation:**
+    *   `eval_strategy`: Must be one of ""no"", ""steps"", ""epoch"", or a valid `IntervalStrategy`.
+    *   `logging_strategy`: Must be one of ""no"", ""epoch"", ""steps"", or a valid `IntervalStrategy`.
+    *   `save_strategy`: Must be one of ""no"", ""epoch"", ""steps"", ""best"", or a valid `SaveStrategy`.
+    *   `lr_scheduler_type`: Must be a recognized scheduler type string or a valid `SchedulerType`.
+    *   `log_level`, `log_level_replica`: Must be one of 'debug', 'info', 'warning', 'error', 'critical', 'passive'.
+    *   `half_precision_backend`: Must be one of ""auto"", ""apex"", ""cpu_amp"".
+    *   `ddp_backend`: If set, must be one of ""nccl"", ""mpi"", ""ccl"", ""gloo"", ""hccl"".
+    *   `debug`: If not empty string or list, must contain ""underflow_overflow"" or ""tpu_metrics_debug"".
+    *   `optim`: Must be a recognized optimizer name string or a valid `OptimizerNames`.
+    *   `report_to`: If string, must be ""all"" or ""none"". If list, must contain supported platform strings.
+    *   `hub_strategy`: Must be one of ""end"", ""every_save"", ""checkpoint"", ""all_checkpoints"", or a valid `HubStrategy`.
+    *   `torchdynamo` (if set): Must be one of the specified backend strings (""eager"", ""aot_eager"", ""inductor"", etc.).
+    *   `torch_compile_backend` (if set): Must be a valid PyTorch compile backend string.
+    *   `torch_compile_mode` (if set): Must be a valid PyTorch compile mode string.
+    *   `fsdp` (if not bool): Must be a string option or a list of string options from the description.
+*   **Conditional Dependencies and Conflicts:**
+    *   If `eval_strategy` is ""steps"", `eval_steps` must be a positive integer or a float in `[0, 1)`.
+    *   If `logging_strategy` is ""steps"", `logging_steps` must be a positive integer or a float in `[0, 1)`.
+    *   If `save_strategy` is ""steps"", `save_steps` must be a positive integer or a float in `[0, 1)`.
+    *   If `max_steps` is set (> -1), it overrides `num_train_epochs`.
+    *   If `warmup_steps` is set (> 0), it overrides `warmup_ratio`.
+    *   If `load_best_model_at_end` is True, `save_strategy` must be the same as `eval_strategy`.
+    *   If `load_best_model_at_end` is True and `save_strategy`/`eval_strategy` are ""steps"", `save_steps` should ideally be a multiple of `eval_steps`.
+    *   `metric_for_best_model` and `greater_is_better` are only relevant if `load_best_model_at_end` is True.
+    *   `ignore_data_skip` is primarily relevant when `resume_from_checkpoint` is set.
+    *   `fsdp_config` is only relevant if `fsdp` is enabled.
+    *   `deepspeed` is only relevant when using DeepSpeed. `deepspeed` and `fsdp` are typically mutually exclusive.
+    *   `bf16` and `fp16` cannot both be True.
+    *   `bf16_full_eval` is only relevant if `bf16` is True.
+    *   `fp16_full_eval` is only relevant if `fp16` is True.
+    *   `bf16_full_eval` and `fp16_full_eval` cannot both be True.
+    *   `fp16_opt_level` is primarily relevant if `fp16` is True and `half_precision_backend` is ""apex"".
+    *   `length_column_name` is ignored unless `group_by_length` is True and the dataset is a `Dataset`.
+    *   `dataloader_persistent_workers` or `dataloader_prefetch_factor` require `dataloader_num_workers > 0`.
+    *   `push_to_hub` set to True requires setting `hub_model_id` or having it inferable from `output_dir`.
+    *   `hub_strategy`, `hub_token`, `hub_private_repo`, `hub_always_push` are only relevant if `push_to_hub` is True.
+    *   `gradient_checkpointing_kwargs` is only relevant if `gradient_checkpointing` is True.
+    *   `include_for_metrics` must be a list containing only ""inputs"" or ""loss"".
+    *   `auto_find_batch_size` requires the `accelerate` library to be installed.
+    *   Setting `torch_compile_backend` or `torch_compile_mode` implies `torch_compile=True`.
+    *   `optim_target_modules` is only relevant for specific optimizer types (GaLore, APOLLO).
+    *   `batch_eval_metrics` requires the `compute_metrics` function to accept a `compute_result` argument.
+    *   `eval_on_start` is only relevant if evaluation (`do_eval` or `eval_strategy != ""no""`) is enabled.
+    *   `use_liger_kernel` is only supported for specific models (llama, mistral, mixtral, gemma).
+*   **Path/Format Validation:**
+    *   `output_dir`: Should be a valid path.
+    *   `logging_dir`: If set, should be a valid path.
+    *   `resume_from_checkpoint`: If set, must be a path to a valid checkpoint directory.
+    *   `fsdp_config` (if string): Must be a valid file path.
+    *   `deepspeed` (if string): Must be a valid file path.
+    *   `accelerator_config` (if string): Must be a valid file path.
+    *   `fsdp_config` (if dict), `deepspeed` (if dict), `accelerator_config` (if dict), `gradient_checkpointing_kwargs` (if dict): Should conform to the expected dictionary structure/keys for the respective feature.
+*   **Deprecation Checks:**
+    *   `fp16_backend`: Usage should trigger a warning pointing to `half_precision_backend`.
+    *   `use_mps_device`: Usage should trigger a warning as MPS is now handled automatically.
+    *   `include_inputs_for_metrics`: Usage should trigger a warning pointing to `include_for_metrics`."
+"Here are rule-based checking constraints for the Hugging Face `Trainer` component constructor arguments:
+
+*   **model / model_init:** Either `model` or `model_init` must be provided. If `model_init` is provided, `model` should ideally not be provided (or the `model_init` takes precedence for training initialization).
+*   **model type:** If `model` is provided, it should be an instance of `PreTrainedModel` or `torch.nn.Module`.
+*   **model_init type:** If `model_init` is provided, it must be a callable function that returns a `PreTrainedModel` (optionally accepting a trial object).
+*   **args type:** If `args` is provided, it must be an instance of `TrainingArguments`.
+*   **data_collator type:** If `data_collator` is provided, it must be a `DataCollator` instance or compatible callable.
+*   **train_dataset type:** If `train_dataset` is provided, it must be a `torch.utils.data.Dataset`, `torch.utils.data.IterableDataset`, or `datasets.Dataset`.
+*   **eval_dataset type:** If `eval_dataset` is provided, it must be a `torch.utils.data.Dataset`, `datasets.Dataset`, or a dictionary mapping strings to these dataset types.
+*   **eval_dataset dictionary keys:** If `eval_dataset` is a dictionary, the keys should be strings.
+*   **processing_class type:** If `processing_class` is provided, it should be an instance of `PreTrainedTokenizerBase`, `BaseImageProcessor`, `FeatureExtractionMixin`, or `ProcessorMixin`.
+*   **compute_loss_func type:** If `compute_loss_func` is provided, it must be a callable function with the signature `Callable[[raw_outputs, labels, accumulated_batch_size], loss]`.
+*   **compute_metrics type:** If `compute_metrics` is provided, it must be a callable function with the signature `Callable[[EvalPrediction], Dict[str, float]]` or `Callable[[EvalPrediction, bool], Dict[str, float]]`. It must return a dictionary.
+*   **callbacks type:** If `callbacks` is provided, it must be a list where each element is an instance of `TrainerCallback`.
+*   **optimizers / optimizer_cls_and_kwargs:** `optimizers` and `optimizer_cls_and_kwargs` are mutually exclusive; only one should be provided if not using the default optimizer setup from `args`.
+*   **optimizers type:** If `optimizers` is provided, it must be a tuple containing a `torch.optim.Optimizer` and a `torch.optim.lr_scheduler.LambdaLR`.
+*   **optimizer_cls_and_kwargs type:** If `optimizer_cls_and_kwargs` is provided, it must be a tuple containing an optimizer class (`Type[torch.optim.Optimizer]`) and a dictionary of keyword arguments (`Dict[str, Any]`).
+*   **preprocess_logits_for_metrics type:** If `preprocess_logits_for_metrics` is provided, it must be a callable function with the signature `Callable[[torch.Tensor, torch.Tensor], torch.Tensor]`."
+"Here are the rule based checking constraints for the `notebook_login` component based on the provided structure:
+
+*   The function `notebook_login` is specifically designed for notebook environments.
+*   The `new_session` parameter must be of boolean type (`bool`).
+*   The `write_permission` parameter, if provided, must be of boolean type (`bool`).
+*   The `write_permission` parameter is ignored by the API, regardless of the value provided.
+*   The `write_permission` parameter is deprecated and its use is discouraged.
+*   The function itself does not return a specific value (returns `null`)."
+"Here are the rule-based checking constraints for the `load_dataset` API component:
+
+*   **path**: This parameter is mandatory. It must be a non-empty string representing a Hugging Face Hub repository identifier, a local directory path, or a local dataset script path.
+*   **split**: If provided (not `None`), it must be a `datasets.Split` object or a string representing a valid split name or a combination of splits. Providing a `split` influences the return type to be a single `Dataset` or `IterableDataset`. If `split` is `None`, a dictionary of datasets (`DatasetDict` or `IterableDatasetDict`) is returned.
+*   **data_files**: Must be a string, a sequence of strings, or a mapping from split names to strings or sequences of strings. This parameter is typically used when `path` refers to a generic data format builder (like 'csv', 'json', 'text', 'imagefolder') or a local path requiring explicit file specification.
+*   **download_mode**: If provided as a string, it must be a valid string representation of a `datasets.DownloadMode` enum value (e.g., 'REUSE_DATASET_IF_EXISTS', 'REUSE_DATASET_IF_NOT_EXISTS', 'FORCE_DOWNLOAD').
+*   **verification_mode**: If provided as a string, it must be a valid string representation of a `datasets.VerificationMode` enum value (e.g., 'BASIC_CHECKS', 'ALL_CHECKS', 'NO_CHECKS').
+*   **ignore_verifications**: This parameter is deprecated since version 2.9.1. It should ideally not be used, especially in newer versions or if `verification_mode` is also provided. A checker should issue a warning.
+*   **use_auth_token**: This parameter is deprecated since version 2.14.0 in favor of `token`. It should ideally not be used, especially in newer versions or if `token` is also provided. A checker should issue a warning. If both `use_auth_token` and `token` are provided, `token` takes precedence.
+*   **task**: This parameter is deprecated since version 2.13.0. It should ideally not be used. A checker should issue a warning.
+*   **streaming**: Must be a boolean. If `True`, the function returns an `IterableDataset` or `IterableDatasetDict`. If `False`, it returns a `Dataset` or `DatasetDict`.
+*   **num_proc**: If provided, it must be an integer. If it's an integer, it must be non-negative (>= 0).
+*   **Type Checks**: All other parameters (`name`, `data_dir`, `cache_dir`, `features`, `download_config`, `keep_in_memory`, `save_infos`, `revision`, `token`, `storage_options`, `**config_kwargs`) must match their specified types (string, boolean, int, specific object types like `Features`, `DownloadConfig`, `Split`, `Version`, or dictionary/sequence types)."

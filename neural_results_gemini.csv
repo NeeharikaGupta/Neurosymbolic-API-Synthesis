@@ -1,0 +1,1549 @@
+neural_gemini
+"```python
+import tensorflow as tf
+from sklearn.datasets import fetch_california_housing
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+import numpy as np
+
+def train_linear_regression_model():
+    """"""
+    Creates, compiles, and trains a simple linear regression model
+    on the California housing dataset using TensorFlow/Keras.
+    """"""
+    print(""Loading and preparing data..."")
+
+    # 1. Load the California housing dataset
+    # Using sklearn.datasets.fetch_california_housing
+    # API Reference: {'fetch_california_housing': '...'}
+    X, y = fetch_california_housing(return_X_y=True)
+    # X is features, y is target (median house value)
+
+    # Data has 8 features (dimensionality: 8)
+    n_features = X.shape[1]
+    # Target is a single value (real 0.15 - 5, in units of $100,000)
+    n_targets = 1
+
+    print(f""Dataset loaded. Features shape: {X.shape}, Target shape: {y.shape}"")
+
+    # 2. Split data into training and testing sets
+    # Using sklearn.model_selection.train_test_split
+    # API Reference: {'train_test_split': '...'}
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    print(f""Data split into training ({X_train.shape[0]} samples) and testing ({X_test.shape[0]} samples)."")
+
+    # 3. Scale features and target
+    # Using sklearn.preprocessing.StandardScaler
+    # API Reference: {'StandardScaler': '...'}
+    # It's good practice to scale features for many models, including neural networks.
+    # Scaling the target can also improve training stability in regression.
+
+    scaler_X = StandardScaler()
+    X_train_scaled = scaler_X.fit_transform(X_train) # Fit on training data, then transform
+    X_test_scaled = scaler_X.transform(X_test)     # Use scaler fitted on training data to transform test data
+
+    # Reshape y to be 2D for the scaler (StandardScaler expects shape (n_samples, n_features))
+    scaler_y = StandardScaler()
+    y_train_scaled = scaler_y.fit_transform(y_train.reshape(-1, 1))
+    y_test_scaled = scaler_y.transform(y_test.reshape(-1, 1))
+
+    print(""Features and target scaled."")
+
+    # 4. Define the simple linear regression model using Keras Sequential API
+    # A linear regression model is essentially a single Dense layer with no activation.
+    # Using tensorflow.keras.Sequential and tensorflow.keras.layers.Dense
+    # API References: {'tensorflow': '...', 'tensorflow.keras': '...', 'Sequential': '...', 'Dense': '...'}
+
+    model = tf.keras.Sequential([
+        # The Dense layer will take care of the linear transformation (W*x + b)
+        # units=1 because we are predicting a single value (house price)
+        # activation='linear' is the default and is suitable for linear regression output
+        # input_shape is required for the first layer if not using the functional API or model.build
+        tf.keras.layers.Dense(units=n_targets, input_shape=(n_features,))
+    ])
+
+    print(""Model defined: Sequential with one Dense layer."")
+
+    # 5. Compile the model
+    # Using keras.Model.compile
+    # API Reference: {'Sequential': '...'} (as Sequential inherits from Model)
+    # optimizer: 'adam' is a good general-purpose optimizer.
+    # loss: 'mse' (Mean Squared Error) is the standard loss function for regression.
+    model.compile(optimizer='adam', loss='mse')
+
+    print(""Model compiled with Adam optimizer and Mean Squared Error loss."")
+
+    # Display model summary (optional)
+    model.summary()
+
+    # 6. Train the model
+    # Using keras.Model.fit
+    # API Reference: {'Sequential': '...'} (as Sequential inherits from Model)
+    # x, y: Scaled training data
+    # epochs: Number of passes over the training data
+    # validation_data: Optional data to evaluate the model on after each epoch (monitors overfitting)
+    print(""Training the model..."")
+    history = model.fit(X_train_scaled, y_train_scaled, epochs=50, batch_size=32, validation_data=(X_test_scaled, y_test_scaled))
+
+    print(""Training finished."")
+
+    # Optional: Evaluate the model on the test set
+    # Using keras.Model.evaluate
+    # API Reference: Mentioned in Sequential as a common method but not detailed
+    loss = model.evaluate(X_test_scaled, y_test_scaled, verbose=0)
+    print(f""Test Loss (MSE): {loss}"")
+
+    # The trained model can now be used for predictions
+    # To predict, use model.predict(X_new_scaled) and inverse_transform with scaler_y
+    # Example prediction on the first test sample:
+    # sample_prediction_scaled = model.predict(X_test_scaled[0].reshape(1, -1))
+    # sample_prediction_original_scale = scaler_y.inverse_transform(sample_prediction_scaled)
+    # print(f""Example prediction (scaled): {sample_prediction_scaled[0][0]:.4f}"")
+    # print(f""Example prediction (original scale): ${sample_prediction_original_scale[0][0]*100000:.2f}"")
+    # print(f""Actual value (original scale): ${y_test[0]*100000:.2f}"")
+
+
+    return model, scaler_X, scaler_y # Return the trained model and scalers
+
+# Example usage:
+if __name__ == ""__main__"":
+    trained_model, feature_scaler, target_scaler = train_linear_regression_model()
+
+    # Demonstrate a prediction
+    print(""\nDemonstrating prediction..."")
+    # Take the first sample from the *original* test data
+    sample_X_original = X_test[0]
+    sample_y_original = y_test[0]
+
+    # Scale the sample using the fitted feature scaler
+    sample_X_scaled = feature_scaler.transform(sample_X_original.reshape(1, -1))
+
+    # Make a prediction using the trained model
+    sample_prediction_scaled = trained_model.predict(sample_X_scaled)
+
+    # Inverse transform the prediction using the fitted target scaler to get original scale
+    sample_prediction_original_scale = target_scaler.inverse_transform(sample_prediction_scaled)
+
+    print(f""Original Sample Features: {sample_X_original}"")
+    print(f""Actual Median House Value: ${sample_y_original * 100000:.2f}"")
+    print(f""Predicted Median House Value: ${sample_prediction_original_scale[0][0] * 100000:.2f}"")
+
+```
+
+**API Usage Pattern Explanation:**
+
+1.  **Data Loading (`sklearn.datasets.fetch_california_housing`):**
+    *   The first step in most ML tasks is data acquisition.
+    *   `fetch_california_housing` is used directly to load the standard dataset.
+    *   The `return_X_y=True` parameter is a common pattern in scikit-learn datasets to get features (`X`) and target (`y`) as separate NumPy arrays, which is convenient for subsequent processing and feeding into models like Keras.
+    *   This function is called without arguments or with simple boolean flags based on its API description.
+
+2.  **Data Splitting (`sklearn.model_selection.train_test_split`):**
+    *   It's crucial to split data to evaluate the model's performance on unseen examples.
+    *   `train_test_split` takes the feature and target arrays (`X`, `y`) and splits them into corresponding training and testing subsets (`X_train`, `X_test`, `y_train`, `y_test`).
+    *   Key parameters used are `test_size` (proportion of data for testing) and `random_state` (for reproducibility).
+
+3.  **Data Preprocessing/Scaling (`sklearn.preprocessing.StandardScaler`):**
+    *   Neural networks, especially simple ones, often benefit from input features being on a similar scale. The target variable scale can also affect training stability.
+    *   `StandardScaler` is instantiated for both features and the target.
+    *   The `fit` method is called *only* on the training data (`X_train`, `y_train.reshape(-1, 1)`) to learn the mean and standard deviation from the training distribution.
+    *   The `transform` method is then called on *both* the training and testing data (`X_train`, `X_test`, `y_train`, `y_test`) using the *same* fitted scaler. This ensures test data is scaled consistently with the training data, preventing data leakage from the test set into the training process. The target `y` is reshaped because `StandardScaler` expects a 2D array.
+
+4.  **Model Definition (`tf.keras.Sequential`, `tf.keras.layers.Dense`):**
+    *   `tf.keras.Sequential` is used for building models layer-by-layer in a linear stack, which is perfect for this simple model.
+    *   An instance of `tf.keras.Sequential` is created.
+    *   The single layer, `tf.keras.layers.Dense`, is added to the sequential model using the `.add()` method.
+    *   `Dense` is configured with `units=1` because linear regression predicts a single output value (the house price).
+    *   `input_shape=(n_features,)` is specified in the first layer. This tells Keras the shape of a single input sample, allowing the model to be built immediately (rather than using the Delayed-Build Pattern which builds the model on the first `fit` call). `n_features` is derived from the data shape. The default `activation='linear'` is suitable for linear regression.
+
+5.  **Model Compilation (`model.compile`):**
+    *   Before training, the model must be configured. This involves specifying the optimizer and the loss function.
+    *   The `.compile()` method of the `Sequential` model (inherited from `keras.Model`) is called.
+    *   `optimizer='adam'` is chosen as a robust general-purpose optimizer. Keras accepts string names for common optimizers.
+    *   `loss='mse'` (Mean Squared Error) is the standard loss function for regression tasks. Keras accepts string names for common losses.
+
+6.  **Model Training (`model.fit`):**
+    *   The model is trained using the `.fit()` method.
+    *   It takes the scaled training features (`X_train_scaled`) and scaled training targets (`y_train_scaled`).
+    *   `epochs` determines how many times the training process iterates over the entire dataset.
+    *   `batch_size` specifies the number of samples processed before updating the model weights.
+    *   `validation_data=(X_test_scaled, y_test_scaled)` is provided to monitor the model's performance on the test set after each epoch. This is helpful for detecting overfitting.
+
+This pattern follows the standard machine learning workflow: data loading -> preprocessing -> model definition -> model compilation -> model training. It specifically leverages the Keras Sequential API for simplicity and the scikit-learn utilities for dataset handling and standard preprocessing steps, integrating APIs from both libraries as needed."
+"```python
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torchvision
+import torchvision.transforms as transforms
+import matplotlib.pyplot as plt
+import numpy as np
+
+# --- Configuration ---
+# Using basic Python types (int, float, bool)
+BATCH_SIZE = 128
+LEARNING_RATE = 0.001
+NUM_EPOCHS = 10
+DEVICE = torch.device(""cuda"" if torch.cuda.is_available() else ""cpu"")
+print(f""Using device: {DEVICE}"")
+
+# --- Data Loading ---
+# Based on DataLoader, Dataset, ToTensor API documentation concepts
+# We use torchvision.datasets.CIFAR10 which is a subclass of torch.utils.data.Dataset
+# ToTensor is used for conversion, as described in its documentation.
+# DataLoader is used for batching, shuffling, and multi-processing.
+
+# Define transformations
+# Using torchvision.transforms
+transform = transforms.Compose(
+    [transforms.ToTensor(), # Uses the ToTensor transform (converts PIL/ndarray to Tensor, scales [0, 255] to [0, 1] for uint8)
+     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]) # Standard normalization for CIFAR10
+
+# Load CIFAR10 dataset
+# Using torchvision.datasets.CIFAR10 (implied Dataset usage)
+# DataLoader constructor usage with dataset, batch_size, shuffle, num_workers
+trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
+                                        download=True, transform=transform)
+trainloader = torch.utils.data.DataLoader(trainset, batch_size=BATCH_SIZE,
+                                          shuffle=True, num_workers=2)
+
+testset = torchvision.datasets.CIFAR10(root='./data', train=False,
+                                       download=True, transform=transform)
+testloader = torch.utils.data.DataLoader(testset, batch_size=BATCH_SIZE,
+                                         shuffle=False, num_workers=2)
+
+classes = ('plane', 'car', 'bird', 'cat',
+           'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+
+# --- Model Definition ---
+# Based on the concept of torch.nn.Module and standard CNN layers (though specific layers not documented)
+# We define a simple CNN by subclassing torch.nn.Module
+# __init__ method defines the layers, forward method defines the data flow.
+# Uses Conv2d, MaxPool2d, ReLU, Flatten, Linear layers from torch.nn (standard PyTorch pattern)
+
+class SimpleCNN(nn.Module):
+    def __init__(self):
+        # Calls the parent constructor
+        super(SimpleCNN, self).__init__()
+        # Define convolutional layers
+        # Using torch.nn.Conv2d
+        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, padding=1) # Input channels=3 (RGB), output channels=32
+        # Using torch.nn.ReLU (activation function)
+        self.relu = nn.ReLU()
+        # Using torch.nn.MaxPool2d
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2) # Reduces spatial dimensions by half
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1) # Input channels=32, output channels=64
+        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding=1) # Input channels=64, output channels=128
+
+        # Define fully connected layers (Dense in Keras, Linear in PyTorch)
+        # Calculate input size for the first linear layer based on image size (32x32) and pooling
+        # (32 / 2 / 2 / 2)^2 * 128 channels = (4^2) * 128 = 16 * 128 = 2048
+        # Using torch.nn.Linear
+        self.fc1 = nn.Linear(128 * 4 * 4, 512) # Input features based on Conv/Pool output, output features=512
+        self.fc2 = nn.Linear(512, 10) # Input features=512, output features=10 (for 10 classes)
+
+    def forward(self, x):
+        # Implement the forward pass
+        # Using torch.nn.functional for functional API like pooling and activation
+        x = self.pool(self.relu(self.conv1(x)))
+        x = self.pool(self.relu(self.conv2(x)))
+        x = self.pool(self.relu(self.conv3(x)))
+        # Flatten the tensor before passing to fully connected layers
+        # Using torch.flatten (or x.view/reshape)
+        x = torch.flatten(x, 1) # flatten all dimensions except batch
+        x = self.relu(self.fc1(x))
+        x = self.fc2(x) # Output layer, no activation here (CrossEntropyLoss includes Softmax)
+        return x
+
+# Instantiate the model and move it to the chosen device
+model = SimpleCNN()
+# Using Tensor.to(device) method
+model.to(DEVICE)
+
+# --- Loss Function and Optimizer ---
+# Using standard PyTorch loss function and optimizer (specific classes not documented)
+# Using torch.nn.CrossEntropyLoss (loss function)
+criterion = nn.CrossEntropyLoss()
+# Using torch.optim package concept (Optimizer instantiation and methods)
+# Using Adam optimizer from torch.optim and its constructor with model parameters and learning rate
+optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
+
+# --- Training Loop ---
+# Iterates over DataLoader, performs forward/backward passes, updates weights.
+
+print(""Starting training..."")
+for epoch in range(NUM_EPOCHS):  # Loop over the dataset multiple times
+    # Set model to training mode
+    # Using torch.nn.Module.train() method
+    model.train()
+    running_loss = 0.0
+    # Iterate over the DataLoader (using its iterable behavior)
+    for i, data in enumerate(trainloader, 0):
+        # Get the inputs; data is a list of [inputs, labels]
+        inputs, labels = data
+        # Move data to the appropriate device
+        # Using Tensor.to(device) method
+        inputs, labels = inputs.to(DEVICE), labels.to(DEVICE)
+
+        # Zero the parameter gradients
+        # Using optimizer.zero_grad() method (part of torch.optim interface)
+        optimizer.zero_grad()
+
+        # Forward pass
+        # Calling the model instance (which calls the forward method)
+        outputs = model(inputs)
+        # Calculate loss
+        # Using the criterion (nn.CrossEntropyLoss instance)
+        loss = criterion(outputs, labels)
+
+        # Backward pass
+        # Using Tensor.backward() method
+        loss.backward()
+        # Optimize
+        # Using optimizer.step() method (part of torch.optim interface)
+        optimizer.step()
+
+        # Print statistics
+        # Using Tensor.item() method to get scalar value
+        running_loss += loss.item()
+        if i % 100 == 99:    # print every 100 mini-batches
+            print(f'Epoch {epoch + 1}, Batch {i + 1}: loss = {running_loss / 100:.3f}')
+            running_loss = 0.0
+
+print('Finished Training')
+
+# --- Evaluation ---
+# Iterates over test DataLoader, calculates accuracy.
+
+print(""Starting evaluation..."")
+# Set model to evaluation mode
+# Using torch.nn.Module.eval() method
+model.eval()
+correct = 0
+total = 0
+# Disable gradient calculation during evaluation
+# Using torch.no_grad() context manager
+with torch.no_grad():
+    # Iterate over the test DataLoader
+    for data in testloader:
+        images, labels = data
+        # Move data to device
+        # Using Tensor.to(device) method
+        images, labels = images.to(DEVICE), labels.to(DEVICE)
+        # Forward pass (inference)
+        outputs = model(images)
+        # Get predictions
+        # Using Tensor.argmax() method to find the index of the max value (predicted class)
+        # Using Tensor.to(device).cpu() if necessary to move to CPU for numpy conversion or other operations
+        _, predicted = torch.max(outputs.data, 1)
+        # Calculate total samples
+        # Using Tensor.size() method
+        total += labels.size(0)
+        # Calculate correct predictions
+        # Using Tensor comparison (==) and sum() method
+        correct += (predicted == labels).sum().item() # Using item() to get scalar
+
+# Calculate and print accuracy
+accuracy = 100 * correct / total
+print(f'Accuracy of the network on the 10000 test images: {accuracy:.2f} %')
+
+# --- Optional: Visualize some predictions ---
+# Using matplotlib.pyplot (plt alias) for plotting
+def imshow(img):
+    # Unnormalize image for display
+    img = img / 2 + 0.5     # unnormalize
+    # Using numpy.transpose and numpy.asarray
+    npimg = img.numpy()
+    plt.imshow(np.transpose(npimg, (1, 2, 0)))
+    plt.show()
+
+# Get some random test images
+dataiter = iter(testloader)
+images, labels = next(dataiter)
+
+# Print images
+# Using matplotlib.pyplot (plt) and torchvision.utils.make_grid
+# imshow(torchvision.utils.make_grid(images))
+# print('GroundTruth: ', ' '.join(f'{classes[labels[j]]:5s}' for j in range(BATCH_SIZE))) # Assuming BATCH_SIZE <= len(images)
+
+# Make predictions
+images = images.to(DEVICE) # Move to device for inference
+outputs = model(images)
+# Using Tensor.max()
+_, predicted = torch.max(outputs, 1)
+
+# Print predictions
+# print('Predicted:   ', ' '.join(f'{classes[predicted[j]]:5s}' for j in range(BATCH_SIZE)))
+
+```"
+"Okay, here is an API usage pattern using scikit-learn to fulfill the task, based on the provided API descriptions.
+
+This pattern demonstrates:
+1.  Generating synthetic classification data.
+2.  Splitting the data.
+3.  Building a pipeline that first scales the features (learning stats from training data) and then trains a classifier.
+4.  Fitting the pipeline on the training data.
+5.  Evaluating the fitted pipeline on the test data.
+
+```python
+# 1. Import necessary libraries and modules based on API descriptions
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import make_pipeline
+import numpy as np # Although not explicitly provided, numpy is fundamental for sklearn data
+
+# Set a random state for reproducibility
+RANDOM_STATE = 42
+
+# 2. Generate a random n-class classification problem
+# Using make_classification function
+# Parameters: n_samples, n_features, n_informative, n_redundant, n_classes, random_state
+# Let's create a 3-class problem with 1000 samples and 10 features
+n_samples = 1000
+n_features = 10
+n_informative = 5 # Number of informative features
+n_redundant = 2   # Number of redundant features
+n_classes = 3     # Number of classes
+
+print(f""Generating a {n_classes}-class classification problem with {n_samples} samples and {n_features} features..."")
+X, y = make_classification(
+    n_samples=n_samples,
+    n_features=n_features,
+    n_informative=n_informative,
+    n_redundant=n_redundant,
+    n_classes=n_classes,
+    random_state=RANDOM_STATE,
+    flip_y=0.05, # Add a bit of label noise
+    class_sep=1.5 # Make classes reasonably separable
+)
+print(""Data generated successfully."")
+print(f""Shape of X: {X.shape}"")
+print(f""Shape of y: {y.shape}"")
+print(f""Class distribution in y: {np.bincount(y)}"")
+
+# 3. Split the dataset into training and testing sets
+# Using train_test_split function
+# Parameters: arrays (*X, y), test_size, random_state, stratify
+test_size = 0.25
+print(f""\nSplitting data into training ({1-test_size:.0%}) and testing ({test_size:.0%}) sets..."")
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y,
+    test_size=test_size,
+    random_state=RANDOM_STATE,
+    stratify=y # Stratify ensures class proportions are similar in train/test splits
+)
+print(f""Shape of X_train: {X_train.shape}, y_train: {y_train.shape}"")
+print(f""Shape of X_test: {X_test.shape}, y_test: {y_test.shape}"")
+print(f""Class distribution in y_train: {np.bincount(y_train)}"")
+print(f""Class distribution in y_test: {np.bincount(y_test)}"")
+
+
+# 4. Create a scikit-learn pipeline
+# The pipeline should:
+#    a) Scale the data (compute mean/std on train, apply to train/test)
+#    b) Train a classifier
+# Using make_pipeline function with StandardScaler and LogisticRegression
+# StandardScaler: Computes mean/std on fit, applies them on transform
+# LogisticRegression: A common classifier suitable for multi-class problems
+
+# Instantiate the scaler - it will learn the mean and std from training data
+scaler = StandardScaler()
+
+# Instantiate the classifier - default parameters often work well
+# Using 'lbfgs' solver which supports multinomial loss for multiclass
+# Increased max_iter for potential convergence issues with complex data
+classifier = LogisticRegression(multi_class='auto', solver='lbfgs', max_iter=1000, random_state=RANDOM_STATE)
+
+# Create the pipeline: Scaling -> Classification
+print(""\nCreating a pipeline: StandardScaler -> LogisticRegression..."")
+pipeline = make_pipeline(scaler, classifier)
+print(""Pipeline created:"")
+print(pipeline)
+
+# 5. Train the model by fitting the pipeline on the training set
+# The pipeline's fit method first fits the scaler on X_train,
+# then transforms X_train, and finally fits the classifier on the scaled X_train and y_train.
+print(""\nFitting the pipeline on the training data..."")
+pipeline.fit(X_train, y_train)
+print(""Pipeline fitting complete."")
+
+# 6. Compute the score on the test set
+# The pipeline's score method automatically applies the fitted scaler
+# (using mean/std from X_train) to X_test, then passes the transformed X_test
+# to the fitted classifier for prediction and scores against y_test.
+print(""\nComputing the score on the test data..."")
+test_score = pipeline.score(X_test, y_test)
+print(f""Test set score (accuracy): {test_score:.4f}"")
+
+# Example of predicting on test set (optional, but demonstrates usage)
+# predictions = pipeline.predict(X_test)
+# print(""\nFirst 5 test predictions:"", predictions[:5])
+# print(""First 5 actual labels:"", y_test[:5])
+```
+
+**Explanation of the Pattern:**
+
+1.  **Data Generation & Splitting:** We use `make_classification` to get our synthetic data (`X`, `y`) and `train_test_split` to divide it into training (`X_train`, `y_train`) and testing (`X_test`, `y_test`) sets. Using `stratify=y` is important to ensure that the proportion of classes is roughly the same in both splits, which is good practice for classification.
+2.  **Pipeline Definition (`make_pipeline`):**
+    *   The core idea is to chain preprocessing steps (`StandardScaler`) and the final estimator (`LogisticRegression`) together.
+    *   `StandardScaler` is chosen because the task specifically asks for computing mean and standard deviation on the training set and applying the *same* transformation later. This is exactly what `StandardScaler` does with its `fit` and `transform` methods.
+    *   `LogisticRegression` is a suitable classifier for multi-class problems, as indicated by its API documentation.
+    *   `make_pipeline` is a convenient way to construct this sequence. It automatically names the steps (e.g., 'standardscaler', 'logisticregression').
+3.  **Training (`pipeline.fit(X_train, y_train)`):**
+    *   Calling `fit` on the pipeline triggers the `fit_transform` method on all transformers (like `StandardScaler`) *except the last one*. The last estimator (`LogisticRegression`) only has its `fit` method called.
+    *   Crucially, `StandardScaler` calculates the mean and standard deviation *only* from the `X_train` data it receives. It stores these values in its `mean_` and `scale_` attributes.
+    *   The *transformed* training data (scaled using the means and stds from `X_train`) is then passed to the `LogisticRegression` model's `fit` method.
+4.  **Evaluation (`pipeline.score(X_test, y_test)`):**
+    *   Calling `score` (or `predict`, `predict_proba`) on the pipeline triggers the `transform` method on all transformers in sequence.
+    *   The `StandardScaler` uses the `mean_` and `scale_` values it learned during the `fit` phase (on `X_train`) to transform the `X_test` data. This is the key to avoiding data leakage from the test set into the preprocessing step.
+    *   The transformed test data is then passed to the `LogisticRegression` model's `score` method to compute the accuracy (default scoring for classification models).
+
+This pattern ensures that the scaling is consistently applied using statistics derived *only* from the training data, preventing common data leakage issues and correctly simulating how preprocessing should be applied in a real-world scenario."
+"```python
+import torch
+from datasets import load_dataset, Dataset
+from transformers import (
+    AutoTokenizer,
+    AutoModelForSequenceClassification,
+    TrainingArguments,
+    Trainer,
+    DataCollatorWithPadding,
+    PreTrainedTokenizerBase # To specify type hint for collator
+)
+import numpy as np
+from sklearn.metrics import accuracy_score
+import os
+from typing import Dict, Any, Tuple
+
+# Based on API documentation:
+# - load_dataset from 'datasets' is suitable for loading 'imdb'.
+# - AutoTokenizer.from_pretrained from 'transformers' for tokenization.
+# - AutoModelForSequenceClassification.from_pretrained from 'transformers' for the model.
+# - TrainingArguments from 'transformers' for training configuration.
+# - Trainer from 'transformers' for the training loop.
+# - DataCollatorWithPadding from 'transformers' for batching with padding.
+# - Dataset object (from datasets) has .map() for preprocessing.
+# - Trainer expects 'labels' column and potentially compute_metrics function.
+# - sklearn.metrics.accuracy_score for evaluation metric.
+
+def train_sentiment_classification_model(
+    model_checkpoint: str = ""distilbert-base-uncased"",
+    dataset_name: str = ""imdb"",
+    output_dir: str = ""./sentiment_training_results"",
+    num_train_epochs: float = 3.0,
+    per_device_train_batch_size: int = 16,
+    per_device_eval_batch_size: int = 16,
+    logging_steps: int = 100,
+    eval_strategy: str = ""epoch"",
+    save_strategy: str = ""epoch"",
+    load_best_model_at_end: bool = True,
+    metric_for_best_model: str = ""accuracy"",
+    seed: int = 42,
+    learning_rate: float = 5e-5,
+    weight_decay: float = 0.01
+) -> Tuple[Trainer, Dict[str, Any]]:
+    """"""
+    Trains a Hugging Face model for binary sentiment classification
+    on the IMDb dataset using the Trainer API.
+
+    Args:
+        model_checkpoint (str): The identifier of the pre-trained model
+                                 from Hugging Face Hub (e.g., ""distilbert-base-uncased"").
+        dataset_name (str): The name of the dataset from Hugging Face Hub
+                            (e.g., ""imdb"").
+        output_dir (str): Directory to save the trained model, logs, and checkpoints.
+        num_train_epochs (float): Total number of training epochs.
+        per_device_train_batch_size (int): Batch size per device during training.
+        per_device_eval_batch_size (int): Batch size per device during evaluation.
+        logging_steps (int): Number of update steps between two logs.
+        eval_strategy (str): Evaluation strategy (""no"", ""steps"", ""epoch"").
+        save_strategy (str): Checkpoint save strategy (""no"", ""epoch"", ""steps"", ""best"").
+        load_best_model_at_end (bool): Whether to load the best model found during training.
+        metric_for_best_model (str): Metric to use for comparing models when
+                                     load_best_model_at_end is True.
+        seed (int): Random seed for reproducibility.
+        learning_rate (float): The initial learning rate for the optimizer.
+        weight_decay (float): The weight decay to apply.
+
+    Returns:
+        Tuple[Trainer, Dict[str, Any]]: The configured Trainer object and
+                                        the training result dictionary.
+    """"""
+
+    print(f""Loading dataset: {dataset_name}..."")
+    # load_dataset('imdb') returns a DatasetDict with keys 'train', 'test', 'unsupervised'.
+    # We only need 'train' and 'test' for supervised training/evaluation.
+    try:
+        dataset = load_dataset(dataset_name)
+        train_dataset: Dataset = dataset['train']
+        eval_dataset: Dataset = dataset['test']
+        print(f""Dataset loaded successfully. Splits: {list(dataset.keys())}"")
+    except Exception as e:
+        print(f""Error loading dataset {dataset_name}: {e}"")
+        raise
+
+    print(f""Loading tokenizer: {model_checkpoint}..."")
+    # AutoTokenizer.from_pretrained is the class method to load tokenizer config
+    # and vocabulary from the pre-trained model.
+    try:
+        tokenizer: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained(model_checkpoint)
+        print(""Tokenizer loaded."")
+    except Exception as e:
+        print(f""Error loading tokenizer {model_checkpoint}: {e}"")
+        raise
+
+    # Preprocessing step: Tokenize the text
+    print(""Tokenizing dataset..."")
+    def tokenize_function(examples: Dict[str, Any]) -> Dict[str, Any]:
+        """"""Applies the tokenizer to the text column.""""""
+        # The tokenizer will convert text to input_ids and attention_mask.
+        # truncation=True handles texts longer than the model's max length.
+        # padding=False here because DataCollatorWithPadding will handle dynamic padding per batch.
+        return tokenizer(examples[""text""], truncation=True)
+
+    # Apply the tokenization function to the dataset using .map()
+    # batched=True processes examples in batches, significantly speeding up tokenization.
+    try:
+        tokenized_train_dataset = train_dataset.map(tokenize_function, batched=True)
+        tokenized_eval_dataset = eval_dataset.map(tokenize_function, batched=True)
+        print(""Dataset tokenization complete."")
+    except Exception as e:
+        print(f""Error during dataset tokenization: {e}"")
+        raise
+
+    # Prepare labels
+    # The IMDb dataset 'label' column contains integers 0 and 1, which is the format
+    # expected by AutoModelForSequenceClassification for sequence classification.
+    # The Trainer expects the label column to be named 'labels'. Rename it if necessary.
+    if ""label"" in tokenized_train_dataset.column_names:
+        tokenized_train_dataset = tokenized_train_dataset.rename_column(""label"", ""labels"")
+    if ""label"" in tokenized_eval_dataset.column_names:
+        tokenized_eval_dataset = tokenized_eval_dataset.rename_column(""label"", ""labels"")
+    print(""Label column ensured to be named 'labels'."")
+
+
+    # Remove columns that are not needed by the model's forward pass
+    # The Trainer automatically removes unused columns if remove_unused_columns=True
+    # in TrainingArguments (which is the default), but explicit removal can be clearer.
+    # The model typically expects 'input_ids', 'attention_mask', and 'labels'.
+    cols_to_remove_train = [col for col in tokenized_train_dataset.column_names if col not in ['input_ids', 'attention_mask', 'labels']]
+    cols_to_remove_eval = [col for col in tokenized_eval_dataset.column_names if col not in ['input_ids', 'attention_mask', 'labels']]
+    if cols_to_remove_train:
+        tokenized_train_dataset = tokenized_train_dataset.remove_columns(cols_to_remove_train)
+        print(f""Removed unused columns from train dataset: {cols_to_remove_train}"")
+    if cols_to_remove_eval:
+        tokenized_eval_dataset = tokenized_eval_dataset.remove_columns(cols_to_remove_eval)
+        print(f""Removed unused columns from eval dataset: {cols_to_remove_eval}"")
+
+
+    print(f""Loading model for sequence classification: {model_checkpoint}..."")
+    # AutoModelForSequenceClassification.from_pretrained loads the pre-trained model
+    # with a sequence classification head on top.
+    # num_labels=2 specifies that it's a binary classification task.
+    try:
+        model = AutoModelForSequenceClassification.from_pretrained(model_checkpoint, num_labels=2)
+        print(""Model loaded."")
+    except Exception as e:
+        print(f""Error loading model {model_checkpoint}: {e}"")
+        raise
+
+    # Define Training Arguments
+    print(f""Defining TrainingArguments (output_dir='{output_dir}')..."")
+    # TrainingArguments is a class that holds all hyperparams and settings for Trainer.
+    # Referencing the API doc for TrainingArguments parameters:
+    training_args = TrainingArguments(
+        output_dir=output_dir, # required
+        num_train_epochs=num_train_epochs,
+        per_device_train_batch_size=per_device_train_batch_size,
+        per_device_eval_batch_size=per_device_eval_batch_size,
+        learning_rate=learning_rate,
+        weight_decay=weight_decay,
+        warmup_ratio=0.06, # Often used with AdamW for transformer fine-tuning
+        adam_beta1=0.9,
+        adam_beta2=0.999,
+        adam_epsilon=1e-8,
+        max_grad_norm=1.0,
+        logging_dir=f""{output_dir}/logs"",
+        logging_strategy=""steps"", # Log every X steps
+        logging_steps=logging_steps,
+        evaluation_strategy=eval_strategy, # Evaluate every epoch
+        save_strategy=save_strategy, # Save checkpoint every epoch
+        load_best_model_at_end=load_best_model_at_end, # Load model with best eval metric at the end
+        metric_for_best_model=metric_for_best_model, # Monitor accuracy to find the best model
+        greater_is_better=True, # For accuracy, higher is better
+        seed=seed,
+        # Use GPU if available, otherwise CPU. TrainingArguments handles device placement.
+        # use_cpu=False # This is the default behavior (use cuda/mps if available)
+        # dataloader_num_workers=os.cpu_count() # Optional: use multiple processes for data loading
+    )
+    print(""TrainingArguments defined."")
+
+    # Define Data Collator
+    print(""Defining DataCollatorWithPadding..."")
+    # DataCollatorWithPadding dynamically pads the sequences in each batch
+    # to the length of the longest sequence in that batch.
+    # This is efficient as it avoids padding to the maximum sequence length in the *entire* dataset.
+    # It requires the tokenizer to know the padding token and ID.
+    data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
+    print(""Data collator created."")
+
+    # Define Compute Metrics function
+    print(""Defining compute_metrics function..."")
+    # This function is called by the Trainer during evaluation.
+    # It receives an EvalPrediction object containing the model's raw predictions (logits)
+    # and the true labels.
+    def compute_metrics(eval_pred: Any) -> Dict[str, float]:
+        """"""Computes accuracy for binary classification.""""""
+        # EvalPrediction contains predictions (logits) and label_ids
+        logits, labels = eval_pred # Unpack EvalPrediction object
+
+        # For binary classification, logits are typically shape (batch_size, 2)
+        # We take the argmax across the last dimension to get the predicted class index (0 or 1)
+        predictions = np.argmax(logits, axis=-1)
+
+        # Calculate accuracy using sklearn's accuracy_score
+        accuracy = accuracy_score(labels, predictions)
+
+        # Return a dictionary mapping metric names to their values
+        return {""accuracy"": accuracy}
+    print(""compute_metrics function defined."")
+
+
+    # Instantiate Trainer
+    print(""Instantiating Trainer..."")
+    # The Trainer orchestrates the training and evaluation loop.
+    # Referencing the API doc for Trainer constructor parameters:
+    trainer = Trainer(
+        model=model, # The loaded model
+        args=training_args, # The training arguments
+        train_dataset=tokenized_train_dataset, # The preprocessed training data
+        eval_dataset=tokenized_eval_dataset, # The preprocessed evaluation data
+        data_collator=data_collator, # The data collator for batching
+        compute_metrics=compute_metrics, # The function to compute metrics during evaluation
+        tokenizer=tokenizer # Pass tokenizer to Trainer to save it with the model
+    )
+    print(""Trainer instantiated."")
+
+    # Start Training
+    print(""Starting training..."")
+    # Calling .train() runs the entire training loop as configured by TrainingArguments.
+    train_result: Dict[str, Any] = trainer.train()
+    print(""Training finished."")
+
+    # Save the final model
+    # The Trainer automatically saves the best model if load_best_model_at_end=True
+    # and save_strategy matches eval_strategy. You can explicitly save the
+    # potentially non-best final checkpoint as well:
+    # trainer.save_model() # Saves the final model in output_dir
+    # trainer.log_metrics(""train"", train_result.metrics)
+    # trainer.save_metrics(""train"", train_result.metrics)
+    # trainer.save_state()
+
+    print(f""Training results and model saved to {output_dir}"")
+
+    return trainer, train_result
+
+# Example usage:
+if __name__ == ""__main__"":
+    # Set up logging level (optional)
+    import transformers
+    transformers.logging.set_verbosity_info()
+
+    print(""Starting sentiment model training..."")
+    # Using default arguments, training DistilBERT on IMDb
+    trainer, train_results = train_sentiment_classification_model()
+
+    print(""\nTraining complete."")
+    print(""Final training metrics:"")
+    print(train_results.metrics)
+
+    # Optionally, evaluate again after training
+    print(""\nEvaluating the final model..."")
+    eval_results = trainer.evaluate()
+    print(f""Evaluation results: {eval_results}"")
+
+    # The best model checkpoint (if load_best_model_at_end=True)
+    # is loaded back into trainer.model after training.
+    # You can now use trainer.model for inference.
+    print(f""\nTrained model and checkpoints are saved in: {trainer.args.output_dir}"")
+
+    # Example of loading the best model for inference outside of Trainer context
+    # from transformers import pipeline
+    #
+    # best_model_path = trainer.state.best_model_checkpoint or trainer.args.output_dir
+    # print(f""Loading best model from: {best_model_path}"")
+    #
+    # classifier = pipeline(""sentiment-analysis"", model=best_model_path)
+    #
+    # print(""\nInference examples:"")
+    # print(classifier(""This movie was fantastic!""))
+    # print(classifier(""The plot was a bit slow and confusing.""))
+
+```
+
+**API Usage Pattern Description:**
+
+1.  **Load Data:** Use `datasets.load_dataset(dataset_name)` to fetch the IMDb dataset. Specify the desired splits (`'train'`, `'test'`). The API documentation indicates `load_dataset` handles downloading, caching, and returns a `DatasetDict` containing `Dataset` objects for each split.
+2.  **Load Tokenizer:** Use the class method `transformers.AutoTokenizer.from_pretrained(model_checkpoint)` to instantiate the tokenizer appropriate for the chosen model (`distilbert-base-uncased`). The API description for `AutoTokenizer` specifically mentions `from_pretrained` as the way to instantiate.
+3.  **Preprocess Data:** Define a function (`tokenize_function`) that takes an example (or batch of examples when `batched=True`) from the dataset and applies the tokenizer to the text. Use the `.map()` method of the `datasets.Dataset` objects (`train_dataset`, `eval_dataset`) with this function and `batched=True` for efficient parallel processing. This adds `input_ids` and `attention_mask` columns. Ensure the label column is named `labels` (`.rename_column()`). Remove any original columns not needed by the model (`.remove_columns()`).
+4.  **Load Model:** Use the class method `transformers.AutoModelForSequenceClassification.from_pretrained(model_checkpoint, num_labels=2)` to load the pre-trained model weights and configure it for a classification task with 2 output classes (binary classification). The `AutoModel...` API documentation points to `from_pretrained` for instantiation.
+5.  **Configure Training:** Create an instance of `transformers.TrainingArguments`. Pass necessary parameters like `output_dir`, `num_train_epochs`, `per_device_train_batch_size`, `per_device_eval_batch_size`, logging/saving strategies (`eval_strategy`, `save_strategy`, `logging_steps`), and metrics configuration (`load_best_model_at_end`, `metric_for_best_model`). The `TrainingArguments` API documentation details these parameters.
+6.  **Define Data Collator:** Instantiate `transformers.DataCollatorWithPadding(tokenizer=tokenizer)`. This collator dynamically pads the sequences in each batch to the maximum length *within that batch*, which is more memory-efficient than padding the entire dataset to a fixed max length. The API description for `DataCollatorWithPadding` shows the constructor takes a `tokenizer`.
+7.  **Define Metrics Calculation (Optional but Recommended):** Create a function (`compute_metrics`) that accepts an `EvalPrediction` object (as described in the `Trainer` API documentation related to `compute_metrics`) which contains the model's raw outputs (`predictions`) and the true labels (`label_ids`). Inside this function, compute the desired metrics (e.g., accuracy using `sklearn.metrics.accuracy_score`) based on the predictions (usually obtained by applying argmax to the logits) and labels, returning them in a dictionary.
+8.  **Instantiate Trainer:** Create an instance of `transformers.Trainer`. Pass the `model`, `training_args`, `tokenized_train_dataset`, `tokenized_eval_dataset`, `data_collator`, and `compute_metrics` function to the constructor. The `Trainer` API documentation outlines these key parameters.
+9.  **Run Training:** Call the `.train()` method on the `trainer` instance. This executes the entire training loop based on the configuration provided in `TrainingArguments`.
+10. **Result Handling:** The `.train()` method returns a dictionary containing training results. The `Trainer` automatically saves checkpoints and the final model (or the best model if configured) to the `output_dir` specified in `TrainingArguments`."
+"Okay, let's outline the API usage pattern for building and training a TensorFlow Keras model for Fashion MNIST, incorporating Early Stopping and Model Checkpointing based on the provided API information and general TensorFlow/Keras practices.
+
+While the provided API snippets don't explicitly list `tf.keras.datasets`, `tf.keras.layers.Flatten`, `tf.keras.callbacks`, or the specific losses/optimizers like `'categorical_crossentropy'` or `'adam'`, these are fundamental and standard parts of the `tensorflow.keras` API as aggregated by `tf`. We will assume their availability under the `tf.keras` namespace.
+
+**API Usage Pattern: TensorFlow Keras Model with Callbacks**
+
+1.  **Import necessary libraries:**
+    *   Import the main `tensorflow` library.
+    *   Import necessary modules from `tensorflow.keras` like `Sequential`, `Input`, `Dense`, `datasets`, and `callbacks`.
+    *   Import `numpy` for data handling.
+    *   Import `os` to manage checkpoint paths.
+
+    ```python
+    import tensorflow as tf
+    from tensorflow.keras import layers, models, callbacks, utils, datasets
+    import numpy as np
+    import os
+    # Potentially import train_test_split from sklearn if needed for validation split
+    # from sklearn.model_selection import train_test_split
+    ```
+    *Rationale:* The `tf` module is the main entry point. `tf.keras` houses the model building and training components. `layers` contains layer types like `Dense` and `Flatten`. `models.Sequential` is for linear stacks. `callbacks` provides `EarlyStopping` and `ModelCheckpoint`. `utils` contains `to_categorical` for label preprocessing. `datasets` provides `fashion_mnist`. `numpy` is used for data manipulation. `os` is standard for file path operations.
+
+2.  **Load and Prepare Data:**
+    *   Load the Fashion MNIST dataset using `tf.keras.datasets.fashion_mnist.load_data()`. This typically returns NumPy arrays.
+    *   Preprocess image data: Scale pixel values from [0, 255] to [0.0, 1.0] by dividing by 255.0 and convert to float type.
+    *   Preprocess labels: Convert integer labels to one-hot encoded vectors using `tf.keras.utils.to_categorical`. Fashion MNIST has 10 classes.
+    *   Reshape/Flatten image data: Images are 28x28. For simple Dense layers, flatten each image into a 1D array of size 28*28 = 784. This can be done using `.reshape()` or by adding a `Flatten` layer to the model (preferred Keras practice). Let's add a `Flatten` layer to the model definition.
+    *   Split data: Typically, split the training data further into training and validation sets. Using `train_test_split` from `sklearn.model_selection` is a common approach, although not explicitly in the provided TF API snippets, it's a standard ML utility. Alternatively, manually split the loaded training data.
+
+    ```python
+    # Load the dataset
+    (x_train, y_train), (x_test, y_test) = datasets.fashion_mnist.load_data()
+
+    # Define number of classes
+    num_classes = 10
+
+    # Normalize pixel values to be between 0 and 1
+    x_train = x_train.astype('float32') / 255.0
+    x_test = x_test.astype('float32') / 255.0
+
+    # Convert labels to categorical one-hot encoding
+    y_train_categorical = utils.to_categorical(y_train, num_classes)
+    y_test_categorical = utils.to_categorical(y_test, num_classes)
+
+    # Optional: Create a validation set from the training data
+    # Using a manual split for simplicity, as train_test_split wasn't in provided APIs
+    val_split_index = int(len(x_train) * 0.8)
+    x_val = x_train[val_split_index:]
+    y_val_categorical = y_train_categorical[val_split_index:]
+    x_train = x_train[:val_split_index]
+    y_train_categorical = y_train_categorical[:val_split_index]
+
+    print(f""Train data shape: {x_train.shape}"")
+    print(f""Val data shape: {x_val.shape}"")
+    print(f""Test data shape: {x_test.shape}"")
+    ```
+    *Rationale:* Scaling improves numerical stability. One-hot encoding is required for `categorical_crossentropy`. A validation set is essential for monitoring metrics used by the callbacks.
+
+3.  **Define the Model Architecture:**
+    *   Use `tf.keras.Sequential` as a container for layers, as described in the `Sequential` API.
+    *   Add an `Input` layer (implicitly or explicitly). Explicit is clearer. The shape will be the image dimensions (28, 28), batch size is handled automatically.
+    *   Add a `Flatten` layer to convert the 2D image (plus channel dimension, implicitly 1 for grayscale) into a 1D vector.
+    *   Add `Dense` layers as described in the `Dense` API for hidden layers with an activation function like 'relu'.
+    *   Add a final `Dense` layer for the output, with `units` equal to `num_classes` and 'softmax' activation for multi-class probability output.
+
+    ```python
+    model = models.Sequential([
+        # Input layer implicitly created by Flatten, but defining explicitly is good practice
+        # layers.Input(shape=(28, 28)), # Shape of the image (height, width)
+
+        # Flatten the 28x28 images into a 784-dimensional vector
+        layers.Flatten(input_shape=(28, 28)), # Input shape specified here triggers build
+
+        # Dense hidden layer with ReLU activation (as described in Dense API)
+        layers.Dense(128, activation='relu'),
+
+        # Another Dense hidden layer
+        layers.Dense(64, activation='relu'),
+
+        # Output Dense layer with softmax activation for classification (10 units for 10 classes)
+        layers.Dense(num_classes, activation='softmax')
+    ])
+
+    # Optional: Display model summary to verify architecture
+    model.summary()
+    ```
+    *Rationale:* `Sequential` simplifies linear layer stacks. `Flatten` prepares the image data for dense layers. `Dense` implements the core fully-connected operations. `relu` is a common activation for hidden layers. `softmax` is standard for the output of multi-class classification models, giving probabilities for each class.
+
+4.  **Compile the Model:**
+    *   Use the `compile` method of the `Sequential` model as described.
+    *   Specify an `optimizer` (e.g., 'adam').
+    *   Specify a `loss` function appropriate for one-hot encoded multi-class labels (e.g., 'categorical_crossentropy').
+    *   Specify `metrics` to monitor during training and evaluation (e.g., ['accuracy']).
+
+    ```python
+    model.compile(optimizer='adam',
+                  loss='categorical_crossentropy',
+                  metrics=['accuracy'])
+    ```
+    *Rationale:* Compiling configures the model for the training process by defining the optimizer, loss function, and evaluation metrics.
+
+5.  **Define Callbacks:**
+    *   Create an instance of `tf.keras.callbacks.EarlyStopping`. Configure `monitor` (e.g., `'val_loss'`), `patience`, `mode`, and `restore_best_weights`.
+    *   Create an instance of `tf.keras.callbacks.ModelCheckpoint`. Configure `filepath`, `monitor` (e.g., `'val_accuracy'`), `save_best_only`, and `save_weights_only`. Define a directory for checkpoints.
+
+    ```python
+    # Define checkpoint path
+    checkpoint_dir = './checkpoints'
+    os.makedirs(checkpoint_dir, exist_ok=True)
+    checkpoint_filepath = os.path.join(checkpoint_dir, 'best_model_weights.keras') # .keras format is recommended
+
+    # Define Early Stopping callback
+    # Monitor validation loss, stop if it doesn't improve for 5 epochs
+    early_stopping_callback = callbacks.EarlyStopping(
+        monitor='val_loss',
+        patience=5,
+        mode='min',
+        restore_best_weights=True
+    )
+
+    # Define Model Checkpoint callback
+    # Monitor validation accuracy, save only the best weights
+    model_checkpoint_callback = callbacks.ModelCheckpoint(
+        filepath=checkpoint_filepath,
+        monitor='val_accuracy',
+        save_best_only=True,
+        save_weights_only=True, # Save only the weights, not the full model
+        mode='max',
+        verbose=1 # Log when a better model is found and saved
+    )
+
+    # Create a list of callbacks to pass to the fit method
+    my_callbacks = [
+        early_stopping_callback,
+        model_checkpoint_callback
+    ]
+    ```
+    *Rationale:* Callbacks allow for actions during training. Early stopping prevents overfitting and saves training time. Model checkpointing saves the model's state, allowing training resumption or using the best performing model. Monitoring validation metrics is crucial for both to avoid overfitting to the training data. `save_best_only=True` ensures only the most successful models (based on the monitored metric) are kept.
+
+6.  **Train the Model with Callbacks:**
+    *   Use the `fit` method of the compiled model as described in the `Sequential` API.
+    *   Pass the training data (`x`, `y`).
+    *   Specify `epochs` and `batch_size`.
+    *   Crucially, pass the validation data using the `validation_data` parameter.
+    *   Pass the list of defined callbacks using the `callbacks` parameter.
+
+    ```python
+    epochs = 50 # Set a relatively high number, EarlyStopping will stop it
+    batch_size = 32
+
+    history = model.fit(
+        x_train, y_train_categorical,
+        epochs=epochs,
+        batch_size=batch_size,
+        validation_data=(x_val, y_val_categorical), # Use validation data for monitoring callbacks
+        callbacks=my_callbacks # Pass the list of callbacks
+    )
+    ```
+    *Rationale:* The `fit` method executes the training loop. `epochs` defines the maximum iterations. `batch_size` determines update frequency. `validation_data` enables monitoring validation metrics per epoch/step. The `callbacks` list integrates the desired behaviors into the training process.
+
+7.  **Evaluate the Model (Optional but Recommended):**
+    *   After training (which might have been stopped early), evaluate the model on the test set using the `evaluate` method (mentioned but not detailed in Sequential API, standard Keras method).
+    *   If `restore_best_weights=True` was used in EarlyStopping, the model weights will be those from the best epoch on the validation set.
+
+    ```python
+    # Evaluate the model on the test set
+    loss, accuracy = model.evaluate(x_test, y_test_categorical, verbose=0)
+    print(f'\nTest loss: {loss:.4f}')
+    print(f'Test accuracy: {accuracy:.4f}')
+
+    # The best weights were automatically restored by EarlyStopping if restore_best_weights=True
+    # or you could load the best saved weights manually if save_weights_only was False in Checkpoint
+    # For example, if you saved the full model instead of just weights:
+    # loaded_model = models.load_model(checkpoint_filepath)
+    # loss, accuracy = loaded_model.evaluate(x_test, y_test_categorical, verbose=0)
+    # print(f'Loaded best model test accuracy: {accuracy:.4f}')
+
+    # Since we saved weights only:
+    # If you wanted to use the explicitly saved best weights (e.g., in a new session):
+    # new_model = models.Sequential([...]) # Build the exact same model structure
+    # new_model.compile(...) # Compile it
+    # new_model.load_weights(checkpoint_filepath) # Load the saved weights
+    # loss, accuracy = new_model.evaluate(x_test, y_test_categorical, verbose=0)
+    # print(f'Loaded best weights test accuracy: {accuracy:.4f}')
+
+    ```
+    *Rationale:* Evaluating on the separate test set provides an unbiased estimate of the model's performance on unseen data.
+
+This pattern demonstrates loading data, preprocessing, building a simple neural network using `Sequential` and `Dense` layers, compiling it with an optimizer and loss, defining and configuring `EarlyStopping` and `ModelCheckpoint` callbacks, and finally training the model using the `fit` method while passing the callbacks and validation data."
+"```python
+import torch
+import torch.utils.data as data
+import torchvision.datasets as datasets
+import torchvision.transforms as transforms
+import os
+from PIL import Image
+from pathlib import Path
+import numpy as np
+
+# --- Step 1: Simulate the folder structure using the actual FashionMNIST data ---
+# This step is necessary because torchvision.datasets.FashionMNIST loads data
+# from internal structures (like .gz files) rather than a user-provided folder
+# structure where labels are determined by directory names.
+# We will download the data, then save it into the desired folder format.
+
+def save_fashion_mnist_to_folder(root_dir=""fashion_mnist_folder""):
+    """"""
+    Downloads FashionMNIST and saves images into a folder structure:
+    root_dir/label/image_idx.png
+    """"""
+    # Define a temporary directory to store the original downloaded data
+    temp_download_dir = ""./fashion_mnist_temp""
+
+    # Download the standard FashionMNIST dataset
+    print(f""Downloading FashionMNIST to {temp_download_dir}..."")
+    train_dataset = datasets.FashionMNIST(root=temp_download_dir, train=True, download=True)
+    test_dataset = datasets.FashionMNIST(root=temp_download_dir, train=False, download=True)
+    print(""Download complete."")
+
+    # Combine train and test data for saving
+    all_data = train_dataset.data.numpy()
+    all_targets = train_dataset.targets.numpy()
+    all_data = np.concatenate((all_data, test_dataset.data.numpy()), axis=0)
+    all_targets = np.concatenate((all_targets, test_dataset.targets.numpy()), axis=0)
+
+    print(f""Saving FashionMNIST images to folder structure in {root_dir}..."")
+    # Create the root directory if it doesn't exist
+    Path(root_dir).mkdir(parents=True, exist_ok=True)
+
+    # Create subdirectories for each class label
+    for i in range(10):
+        class_dir = Path(root_dir) / str(i)
+        class_dir.mkdir(parents=True, exist_ok=True)
+
+    # Save each image
+    for i in range(len(all_data)):
+        image_np = all_data[i]
+        label = all_targets[i]
+        class_dir = Path(root_dir) / str(label)
+        image_path = class_dir / f""image_{i:05d}.png"" # Use 5 digits for indexing
+
+        # Convert numpy array to PIL Image (FashionMNIST is grayscale)
+        img = Image.fromarray(image_np, mode='L')
+        img.save(image_path)
+
+    print(f""Finished saving {len(all_data)} images."")
+    # Note: In a real scenario, you might want to remove the temporary download dir
+    # import shutil
+    # shutil.rmtree(temp_download_dir)
+
+
+# --- Step 2: Create the custom Dataset class subclasing torch.utils.data.Dataset ---
+
+# Based on the Dataset API:
+# - Subclasses torch.utils.data.Dataset
+# - Must implement __getitem__(self, index) -> sample
+# - Should implement __len__(self) -> int (required for default DataLoader options)
+
+class FashionMNISTFolderDataset(data.Dataset):
+    """"""
+    Custom Dataset to load FashionMNIST-like images and labels from a folder structure.
+    Assumes structure: root_dir/label/image_name.png
+    """"""
+    def __init__(self, root_dir, transform=None):
+        """"""
+        Initializes the dataset by scanning the folder structure.
+
+        Args:
+            root_dir (string): Directory with all the images structured in subfolders.
+            transform (callable, optional): Optional transform to be applied on a sample.
+        """"""
+        self.root_dir = Path(root_dir)
+        self.transform = transform
+        self.image_paths = []
+        self.labels = []
+        self.classes = [] # Store class names/labels found
+
+        # Scan the directory structure
+        print(f""Scanning images in {self.root_dir}..."")
+        for class_dir in sorted(self.root_dir.iterdir()): # Sort for consistent order
+            if class_dir.is_dir():
+                class_name = class_dir.name # Folder name is the class label (as string)
+                # Attempt to convert class_name to integer label
+                try:
+                    label = int(class_name)
+                    self.classes.append(label)
+                except ValueError:
+                    print(f""Warning: Skipping directory '{class_dir}' as it's not an integer label."")
+                    continue
+
+                # Sort image files for consistent order
+                for img_path in sorted(class_dir.glob(""*.png"")): # Assuming .png from simulation
+                    self.image_paths.append(img_path)
+                    self.labels.append(label) # Store integer label
+
+        if not self.image_paths:
+            raise RuntimeError(f""Found 0 images in subfolders of {self.root_dir}. ""
+                               ""Please ensure the directory structure is correct and contains .png files."")
+
+        print(f""Found {len(self.image_paths)} images belonging to {len(self.classes)} classes."")
+
+    def __len__(self):
+        """"""
+        Returns the total number of samples (images).
+        Matches the Dataset API requirement for __len__.
+        """"""
+        return len(self.image_paths)
+
+    def __getitem__(self, idx):
+        """"""
+        Loads and returns one sample (image and label) from the dataset at the given index.
+        Matches the Dataset API requirement for __getitem__.
+
+        Args:
+            idx (int): Index of the sample to load.
+
+        Returns:
+            tuple: (image, label) where image is a Tensor and label is an integer.
+        """"""
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+
+        img_path = self.image_paths[idx]
+        label = self.labels[idx]
+
+        # Load image using Pillow (PIL)
+        image = Image.open(img_path).convert('L') # FashionMNIST is grayscale ('L')
+
+        # Apply transformations
+        if self.transform:
+            image = self.transform(image)
+
+        return image, label
+
+# --- Step 3: Define Transforms ---
+# We need at least ToTensor. FashionMNIST images are 28x28 grayscale.
+# ToTensor will convert PIL Image or ndarray (H x W x C) to Tensor (C x H x W)
+# and scale uint8 [0, 255] to float [0.0, 1.0].
+# Based on ToTensor API: converts PIL/ndarray to torch.Tensor, scales [0, 255] to [0.0, 1.0].
+
+# For grayscale, PIL 'L' mode (8-bit pixels, grayscale) will be scaled.
+# ToTensor description: ""Scales values accordingly for specific input types.""
+# ""PIL Image.Image with modes ['L', ..., '1']"" -> scales to [0.0, 1.0]
+
+image_transforms = transforms.Compose([
+    transforms.ToTensor(), # Converts PIL Image (H, W) to Tensor (1, H, W) and scales [0, 255] to [0.0, 1.0]
+    # Add other transforms here if needed, e.g.,
+    # transforms.Normalize((0.5,), (0.5,)) # Normalize grayscale images
+])
+
+# --- Step 4: Use the custom Dataset with DataLoader for batching ---
+
+# Based on DataLoader API:
+# - Combines a dataset and a sampler, provides an iterable over the dataset.
+# - Constructor takes 'dataset', 'batch_size', 'shuffle', 'num_workers', etc.
+
+if __name__ == ""__main__"":
+    # Define the root directory for our simulated dataset
+    simulated_root = ""./custom_fashion_mnist_data""
+
+    # Simulate the data if it doesn't exist
+    # Check if any class directory exists, assuming data is saved if any subdir exists
+    if not any(Path(simulated_root).iterdir()):
+         save_fashion_mnist_to_folder(simulated_root)
+    else:
+         print(f""Data already found in {simulated_root}. Skipping simulation."")
+
+
+    # Instantiate the custom dataset
+    print(""\nCreating custom dataset..."")
+    try:
+        custom_dataset = FashionMNISTFolderDataset(root_dir=simulated_root, transform=image_transforms)
+        print(f""Dataset created with {len(custom_dataset)} samples."")
+    except RuntimeError as e:
+        print(f""Error creating dataset: {e}"")
+        print(""Please ensure the simulation step ran correctly or the directory structure is valid."")
+        exit()
+
+
+    # Define DataLoader parameters
+    batch_size = 64
+    shuffle_data = True # Set to True to shuffle data at each epoch
+    num_workers = 2     # Number of subprocesses for data loading (0 means main process)
+                        # Based on DataLoader API: num_workers
+
+    # Instantiate the DataLoader
+    print(f""\nCreating DataLoader with batch_size={batch_size}, shuffle={shuffle_data}, num_workers={num_workers}..."")
+    dataloader = data.DataLoader(
+        dataset=custom_dataset,
+        batch_size=batch_size,
+        shuffle=shuffle_data,
+        num_workers=num_workers,
+        # pin_memory=True # Often useful for GPU training, based on DataLoader API
+    )
+    print(""DataLoader created."")
+
+    # --- Step 5: Iterate through the DataLoader to get batches ---
+
+    print(""\nIterating through DataLoader for one epoch:"")
+    # The DataLoader is an iterable, as described in the DataLoader API
+    for i, (images, labels) in enumerate(dataloader):
+        # 'images' will be a Tensor batch of shape (batch_size, C, H, W)
+        # 'labels' will be a Tensor batch of shape (batch_size,)
+        # The batch structure is handled by DataLoader's default collate_fn
+
+        print(f""Batch {i+1}:"")
+        print(f""  Images batch shape: {images.shape}"")
+        print(f""  Labels batch shape: {labels.shape}"")
+        print(f""  Image dtype: {images.dtype}"")
+        print(f""  Label dtype: {labels.dtype}"")
+
+        # Example: Print first few labels in the batch
+        print(f""  First 5 labels in batch: {labels[:5].tolist()}"")
+
+        # Stop after a few batches for demonstration
+        if i >= 2: # Process first 3 batches
+            break
+
+    print(""\nFinished iterating through a few batches."")
+    print(f""Total batches per epoch: {len(dataloader)}"")
+
+    # The custom dataset and dataloader can now be used in a standard PyTorch training loop
+    # e.g., iterate dataloader, pass images to model, compute loss, backprop, etc.
+
+```
+
+**Explanation:**
+
+1.  **Simulate Data (`save_fashion_mnist_to_folder`)**: This is an auxiliary function created specifically to fulfill the ""load from a folder"" requirement using the FashionMNIST data source. It downloads the standard `torchvision.datasets.FashionMNIST`, then manually saves each image into a directory structure (`root_dir/label_int/image_idx.png`) that our custom dataset can understand. This bridging step is necessary because the standard `FashionMNIST` dataset class doesn't operate by scanning a user-defined folder of loose image files.
+2.  **`FashionMNISTFolderDataset` Class**:
+    *   It inherits from `torch.utils.data.Dataset`, as required by the task and indicated by the `Dataset` API documentation.
+    *   **`__init__`**: This method scans the provided `root_dir`. It iterates through subdirectories (which represent labels), lists all image files within them, and stores their paths and corresponding integer labels in lists (`self.image_paths` and `self.labels`). This pre-processing step is crucial for map-style datasets to know the size of the dataset and quickly retrieve any item by index.
+    *   **`__len__`**: This method returns the total number of image paths collected. The `Dataset` API specifies that `__len__` is optional but expected by `DataLoader` for default sampler behavior and `len(dataset)` calls.
+    *   **`__getitem__`**: This is the core method required by the `Dataset` API. Given an `index`, it retrieves the stored image path and label, loads the image using Pillow (`PIL.Image.open`), applies the specified `transform` (like `ToTensor`), and returns the image tensor and the integer label.
+3.  **Transforms (`image_transforms`)**:
+    *   We define a `transforms.Compose` which is a common way to chain multiple transformations.
+    *   `transforms.ToTensor()` is included, as described in the `ToTensor` API. It correctly handles the conversion from a grayscale PIL Image to a PyTorch Tensor and scales the pixel values from the original [0, 255] range to [0.0, 1.0].
+4.  **DataLoader Usage**:
+    *   An instance of our custom `FashionMNISTFolderDataset` is created, pointing to the root directory of the simulated data and providing the desired transformations.
+    *   An instance of `torch.utils.data.DataLoader` is created, as per the `DataLoader` API. We pass our `custom_dataset`, set the `batch_size`, enable `shuffle` to randomize the data order each epoch, and set `num_workers` for potentially faster data loading (though 0 is fine for basic testing).
+    *   The `DataLoader` object is an iterable. We demonstrate this by looping through it. In each iteration, the `DataLoader` automatically calls our dataset's `__getitem__` for a batch of indices (handled by an internal Sampler), combines the individual samples into tensors (handled by an internal `collate_fn`), and yields the batch (`images`, `labels`).
+
+This pattern effectively demonstrates how to use `torch.utils.data.Dataset` and `torch.utils.data.DataLoader` to load data from a custom folder structure, using the FashionMNIST dataset as the source of the data to be loaded."
+"```python
+import matplotlib.pyplot as plt  # Used for plotting, implicitly from the API
+import numpy as np              # Used for array handling, implicitly from the API
+
+# Inferring scikit-learn module structure based on provided APIs (PCA, train_test_split, fetch_california_housing, LogisticRegression)
+# load_iris is a standard dataset loader like fetch_california_housing
+from sklearn.datasets import load_iris
+
+# PCA is provided in the API description
+from sklearn.decomposition import PCA
+
+# train_test_split is provided in the API description
+from sklearn.model_selection import train_test_split
+
+# KNeighborsClassifier is a standard scikit-learn classifier,
+# following the pattern of estimators like LogisticRegression.
+# It's typically found in sklearn.neighbors.
+from sklearn.neighbors import KNeighborsClassifier
+
+# --- API Usage Pattern ---
+
+# 1. Load the dataset
+#    Use load_iris function. The documentation for fetch_california_housing suggests
+#    the return_X_y=True parameter is available to get features and target directly.
+print(""Loading Iris dataset..."")
+X, y = load_iris(return_X_y=True)
+print(f""Dataset loaded: {X.shape[0]} samples, {X.shape[1]} features."")
+
+# 2. Split the dataset into training and testing sets
+#    Use the train_test_split function as described in its API.
+#    It takes the features and target arrays and returns split arrays.
+print(""Splitting data into training and testing sets..."")
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42, stratify=y) # stratify=y ensures proportional class representation
+print(f""Training set: {X_train.shape[0]} samples, Testing set: {X_test.shape[0]} samples."")
+
+# 3. Reduce dimensionality using PCA
+#    Instantiate the PCA class, specifying the number of components.
+#    Use the fit_transform method on the training data to learn the PCA mapping and apply it.
+#    Use the transform method on the test data (do not fit again on test data).
+print(""Applying PCA for dimensionality reduction..."")
+n_components = 2 # Reduce to 2 dimensions for potential visualization later
+pca = PCA(n_components=n_components)
+
+print(""Fitting PCA on training data and transforming..."")
+X_train_pca = pca.fit_transform(X_train)
+print(f""Original training shape: {X_train.shape}, PCA-transformed training shape: {X_train_pca.shape}"")
+
+print(""Transforming testing data using fitted PCA..."")
+X_test_pca = pca.transform(X_test)
+print(f""Original testing shape: {X_test.shape}, PCA-transformed testing shape: {X_test_pca.shape}"")
+
+# 4. Fit a k-nearest neighbors classifier
+#    Instantiate the KNeighborsClassifier class, specifying parameters like n_neighbors.
+#    Use the fit method on the PCA-transformed training data and the corresponding labels.
+print(""Fitting k-Nearest Neighbors classifier..."")
+knn = KNeighborsClassifier(n_neighbors=3) # Using 3 neighbors as an example
+
+print(""Fitting KNN on PCA-transformed training data..."")
+knn.fit(X_train_pca, y_train)
+print(""KNN classifier fitted."")
+
+# 5. (Optional) Evaluate the classifier
+#    Use the score method, available on estimators like LogisticRegression
+#    and inferred for KNeighborsClassifier, to calculate accuracy on the test set.
+print(""Evaluating classifier on PCA-transformed testing data..."")
+accuracy = knn.score(X_test_pca, y_test)
+print(f""Accuracy of KNN classifier on test set: {accuracy:.4f}"")
+
+# --- End of API Usage Pattern ---
+
+# Optional: Plot the results (requires matplotlib)
+# This step is not strictly part of the required task but demonstrates the result of PCA
+try:
+    print(""Plotting PCA-transformed data and decision boundary..."")
+    # Create a meshgrid for plotting the decision boundary
+    x_min, x_max = X_train_pca[:, 0].min() - 1, X_train_pca[:, 0].max() + 1
+    y_min, y_max = X_train_pca[:, 1].min() - 1, X_train_pca[:, 1].max() + 1
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.02),
+                         np.arange(y_min, y_max, 0.02))
+
+    # Predict class for each point in the meshgrid
+    Z = knn.predict(np.c_[xx.ravel(), yy.ravel()])
+    Z = Z.reshape(xx.shape)
+
+    # Plot the decision boundary
+    plt.figure(figsize=(8, 6))
+    plt.contourf(xx, yy, Z, alpha=0.8, cmap=plt.cm.RdYlBu)
+
+    # Plot the training and testing points
+    scatter_train = plt.scatter(X_train_pca[:, 0], X_train_pca[:, 1], c=y_train, cmap=plt.cm.RdYlBu, edgecolor='k', s=50, label='Train')
+    scatter_test = plt.scatter(X_test_pca[:, 0], X_test_pca[:, 1], c=y_test, cmap=plt.cm.RdYlBu, edgecolor='k', s=50, marker='X', label='Test')
+
+    plt.title(""KNN Classification on PCA-reduced Iris Dataset"")
+    plt.xlabel(""Principal Component 1"")
+    plt.ylabel(""Principal Component 2"")
+
+    # Add legend with class labels
+    legend1 = plt.legend(*scatter_train.legend_elements(), loc=""lower left"", title=""Classes"")
+    plt.gca().add_artist(legend1)
+    plt.legend(handles=[scatter_train, scatter_test], loc=""upper right"")
+
+
+    plt.show()
+except ImportError:
+    print(""Matplotlib not installed. Skipping plot."")
+except Exception as e:
+    print(f""An error occurred during plotting: {e}"")
+
+```"
+"Okay, the provided API structures (`tensorflow`, `tensorflow.keras`, `Sequential`, `Dense`, `Input`, `Concatenate`, `fetch_california_housing`, `make_classification`, `train_test_split`, `StandardScaler`, `LogisticRegression`, `make_pipeline`, `PCA`, `torch`, `torch.nn`, `torch.optim`, `torchvision`, `torchvision.transforms`, `torch.nn.functional`, `Dataset`, `DataLoader`, `torchvision.datasets`, `ToTensor`, `numpy`, `pandas`, `matplotlib.pyplot`, `AutoTokenizer`, `DataCollatorWithPadding`, `AutoModelForSequenceClassification`, `TrainingArguments`, `Trainer`, `notebook_login`, `load_dataset`) do **not** include the Hadoop MapReduce API. These are predominantly Python libraries for machine learning, deep learning, and data analysis, whereas the task specifically requires using the **Java Hadoop MapReduce API**.
+
+Therefore, I will describe the standard API usage pattern for word frequency counting in Java Hadoop MapReduce, as the provided APIs are not applicable to this task.
+
+**API Usage Pattern: Hadoop MapReduce for Word Count**
+
+The Hadoop MapReduce API follows a distinct programming model involving `Mapper` and `Reducer` classes, configured and executed via a `Job`.
+
+1.  **Identify the Core Problem Components:**
+    *   **Input:** A large text file (line by line).
+    *   **Desired Output:** A list of unique words and their total counts.
+
+2.  **Design the Map Phase:**
+    *   **Input per Mapper Task:** A portion of the input file, typically read line by line by the default `TextInputFormat`. Each input record to the mapper is a key-value pair:
+        *   Key: `LongWritable` (the byte offset of the line in the file).
+        *   Value: `Text` (the content of the line).
+    *   **Mapper Logic:** Process each line.
+        *   Break the line into individual words.
+        *   Clean up each word (e.g., remove punctuation, convert to lowercase) to ensure accurate counting (e.g., ""The"" and ""the"" count as the same word).
+        *   For each cleaned word, emit a key-value pair:
+            *   Key: `Text` (the word itself).
+            *   Value: `IntWritable` (the number 1, representing one occurrence of the word).
+    *   **Output per Mapper Task:** Multiple `(Text, IntWritable(1))` pairs for each input line.
+
+3.  **Design the Reduce Phase:**
+    *   **Input per Reducer Task:** The framework shuffles and sorts the mapper outputs. All `(Text, IntWritable(1))` pairs with the same word (`Text` key) are grouped together and sent to a single reducer task. The input to the reducer is:
+        *   Key: `Text` (a unique word).
+        *   Value: `Iterable<IntWritable>` (a list/collection of all the `IntWritable(1)` values emitted by mappers for that specific word).
+    *   **Reducer Logic:** Process the grouped values for each word.
+        *   Iterate through the `Iterable<IntWritable>`.
+        *   Sum up all the `IntWritable` values (which are all 1s).
+        *   Emit the final key-value pair:
+            *   Key: `Text` (the unique word).
+            *   Value: `IntWritable` (the total sum, which is the word frequency).
+    *   **Output per Reducer Task:** A single `(Text, IntWritable(total_count))` pair for each unique word it processed.
+
+4.  **Implement the Java Classes:**
+    *   **Mapper Class:** Extends `Mapper<LongWritable, Text, Text, IntWritable>`. Implements the `map` method.
+    *   **Reducer Class:** Extends `Reducer<Text, IntWritable, Text, IntWritable>`. Implements the `reduce` method.
+    *   **Driver/Job Class:** Contains the `main` method. Configures and launches the MapReduce job.
+
+5.  **Configure and Run the Job (Driver Class):**
+    *   Use the `org.apache.hadoop.conf.Configuration` class to set up the job configuration.
+    *   Create a `org.apache.hadoop.mapreduce.Job` instance.
+    *   Specify the Mapper class using `job.setMapperClass()`.
+    *   Specify the Reducer class using `job.setReducerClass()`.
+    *   (Optional but recommended for Word Count) Specify a Combiner class using `job.setCombinerClass()`. For Word Count, the Reducer logic (summation) can be applied on the mapper side to reduce data transferred to the reducers. The Reducer class can often serve as the Combiner if the operation is associative and commutative (like summation).
+    *   Set the output key and value types for the Mapper: `job.setMapOutputKeyClass(Text.class); job.setMapOutputValueClass(IntWritable.class);`.
+    *   Set the final output key and value types for the Job (Reducer output): `job.setOutputKeyClass(Text.class); job.setOutputValueClass(IntWritable.class);`.
+    *   Specify the input and output file formats: `job.setInputFormatClass(TextInputFormat.class); job.setOutputFormatClass(TextOutputFormat.class);`.
+    *   Set the input path(s) using `FileInputFormat.addInputPath()`.
+    *   Set the output path using `FileOutputFormat.setOutputPath()`. The output path must *not* exist before the job runs.
+    *   Submit the job and wait for completion: `job.waitForCompletion(true);`.
+
+**Example Code Snippets (Illustrative):**
+
+```java
+// --- WordCountMapper.java ---
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Mapper;
+import java.io.IOException;
+import java.util.StringTokenizer;
+
+public class WordCountMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
+
+    private final static IntWritable one = new IntWritable(1);
+    private Text word = new Text();
+
+    @Override
+    public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+        // Convert the line to a Java String
+        String line = value.toString();
+
+        // Tokenize the line by whitespace
+        StringTokenizer tokenizer = new StringTokenizer(line);
+
+        // Process each token (word)
+        while (tokenizer.hasMoreTokens()) {
+            String token = tokenizer.nextToken();
+
+            // Basic cleaning (remove punctuation, convert to lowercase)
+            // This is a simplified cleaning; real-world needs more robustness
+            String cleanedToken = token.toLowerCase().replaceAll(""[^a-z0-9]"", """");
+
+            // Only process non-empty tokens after cleaning
+            if (!cleanedToken.isEmpty()) {
+                word.set(cleanedToken);
+                // Emit the word and a count of 1
+                context.write(word, one);
+            }
+        }
+    }
+}
+```
+
+```java
+// --- WordCountReducer.java ---
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Reducer;
+import java.io.IOException;
+
+public class WordCountReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
+
+    private IntWritable result = new IntWritable();
+
+    @Override
+    public void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
+        int sum = 0;
+        // Sum up all the counts (which are 1s) for this word
+        for (IntWritable val : values) {
+            sum += val.get();
+        }
+        result.set(sum);
+        // Emit the word and its total count
+        context.write(key, result);
+    }
+}
+```
+
+```java
+// --- WordCount.java (Driver Class) ---
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.FileSystem; // Added for deleting output directory
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.util.Tool; // Often used for more complex configurations
+import org.apache.hadoop.util.ToolRunner; // Often used for more complex configurations
+
+public class WordCount { // Could also extend Configured and implement Tool
+
+    public static void main(String[] args) throws Exception {
+        if (args.length != 2) {
+            System.err.println(""Usage: WordCount <input path> <output path>"");
+            System.exit(-1);
+        }
+
+        // 1. Configuration
+        Configuration conf = new Configuration();
+        // conf.set(""mapreduce.job.queuename"", ""default""); // Example setting
+
+        // 2. Job Creation
+        Job job = Job.getInstance(conf, ""Word Count""); // Job.getInstance() is preferred
+
+        // 3. Specify Job Main Class
+        job.setJarByClass(WordCount.class);
+
+        // 4. Specify Mapper and Reducer Classes
+        job.setMapperClass(WordCountMapper.class);
+        job.setReducerClass(WordCountReducer.class);
+
+        // 5. Specify Combiner Class (Optional but good practice for word count)
+        job.setCombinerClass(WordCountReducer.class); // Reducer logic works for Combiner
+
+        // 6. Specify Mapper Output Types
+        job.setMapOutputKeyClass(Text.class);
+        job.setMapOutputValueClass(IntWritable.class);
+
+        // 7. Specify Job Output Types (Reducer Output Types)
+        job.setOutputKeyClass(Text.class);
+        job.setOutputValueClass(IntWritable.class);
+
+        // 8. Specify Input and Output Formats (Optional, defaults are often TextInputFormat/TextOutputFormat)
+        // job.setInputFormatClass(TextInputFormat.class); // Default for text files
+        // job.setOutputFormatClass(TextOutputFormat.class); // Default for text files
+
+        // 9. Specify Input and Output Paths
+        Path inputPath = new Path(args[0]);
+        Path outputPath = new Path(args[1]);
+
+        FileInputFormat.addInputPath(job, inputPath);
+        FileOutputFormat.setOutputPath(job, outputPath);
+
+        // --- IMPORTANT: Delete output directory if it exists ---
+        FileSystem fs = FileSystem.get(conf);
+        if (fs.exists(outputPath)) {
+            fs.delete(outputPath, true); // 'true' for recursive delete
+            System.out.println(""Output directory '"" + outputPath + ""' deleted."");
+        }
+        // -------------------------------------------------------
+
+
+        // 10. Submit the Job and wait for completion
+        System.out.println(""Starting Word Count Job..."");
+        boolean success = job.waitForCompletion(true);
+        System.out.println(""Job finished with status: "" + (success ? ""SUCCESS"" : ""FAILURE""));
+
+        System.exit(success ? 0 : 1);
+    }
+}
+```
+
+This structure demonstrates the typical API usage pattern for a basic Hadoop MapReduce job in Java: define the map and reduce logic in separate classes extending the Hadoop API types, and then configure and run these classes using the `Job` API in a driver class."
